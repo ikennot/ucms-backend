@@ -31,3 +31,16 @@ build/
 
 ### VS Code ###
 .vscode/
+application.yaml
+.env
+
+# Secrets
+*.env
+.env.*
+
+# Logs
+*.log
+logs/
+
+# Test output
+surefire-reports/

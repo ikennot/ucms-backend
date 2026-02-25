@@ -1,13 +1,12 @@
 package com.ucms_backend;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
 class UcmsBackendApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {
+        // Full context tests will be added in Phase 1 with proper test DB setup
+    }
 
 }

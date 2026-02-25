@@ -73,3 +73,11 @@ The server will start on `http://localhost:8080` by default.
 
 *   **Lombok**: Ensure your IDE has the Lombok plugin installed and annotation processing enabled.
 *   **Tests**: You can run tests using `./mvnw test`.
+
+### Keeping Your Code Up to Date
+
+To get the latest changes from the development branch, run:
+
+```bash
+git pull origin development
+```
