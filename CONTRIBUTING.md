@@ -28,8 +28,47 @@ docs: document auth flow in README
 
 1. Branch off `development`
 2. Open PR targeting `development`
-3. Include a short description of what changed and why
-4. Ensure all checks pass before requesting review
+3. Ensure all checks pass before requesting review
+
+### PR Template
+
+Use this format when opening a PR:
+
+```
+## Type of Change
+- [ ] feat — new feature
+- [ ] fix — bug fix
+- [ ] chore — maintenance, dependencies, config
+- [ ] docs — documentation only
+- [ ] refactor — code change that neither fixes a bug nor adds a feature
+- [ ] test — adding or updating tests
+
+## What Changed
+<!-- Short description of what was changed -->
+
+## Why
+<!-- Motivation and context. What problem does this solve? -->
+
+## How to Test
+<!-- Steps to verify the change works correctly -->
+1. 
+2. 
+
+## Related Issues
+<!-- Link related issues: Closes #123 -->
+
+## Screenshots
+<!-- If applicable, add screenshots or logs -->
+
+## Checklist
+- [ ] Code follows the Google Java Style Guide
+- [ ] No business logic in controllers
+- [ ] Ownership + role checks are in the service layer
+- [ ] All responses use `ApiResponse<T>` wrapper
+- [ ] No secrets or credentials committed
+- [ ] `application.yaml` is NOT staged
+- [ ] CI passes
+```
 
 ## Code Style
 
