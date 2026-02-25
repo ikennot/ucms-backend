@@ -1,0 +1,41 @@
+# ============================================================
+# UCMS Backend — Local Configuration Template
+# ============================================================
+# 1. Copy this file: cp application.yaml.example application.yaml
+# 2. Fill in all [PLACEHOLDER] values below
+# 3. Never commit application.yaml — it is gitignored
+# ============================================================
+
+spring:
+  application:
+    name: ucms-backend
+  datasource:
+    # Supabase Dashboard → Settings → Database → Connection string → JDBC tab
+    # Replace [YOUR-PASSWORD] in the copied string with your DB password
+    url: jdbc:postgresql://db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
+    username: postgres
+    # Supabase Dashboard → Settings → Database → Database password
+    password: [YOUR-DB-PASSWORD]
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+supabase:
+  # Supabase Dashboard → Settings → API → Project URL
+  url: https://[YOUR-PROJECT-REF].supabase.co
+  # Supabase Dashboard → Settings → API → anon (public) key — safe to share within team
+  anon-key: [YOUR-ANON-KEY]
+  # Supabase Dashboard → Settings → API → service_role (secret) key — BACKEND ONLY, never share publicly
+  service-role-key: [YOUR-SERVICE-ROLE-KEY]
+  # Constructed from your Project URL: https://[YOUR-PROJECT-REF].supabase.co/auth/v1/.well-known/jwks.json
+  jwks-uri: https://[YOUR-PROJECT-REF].supabase.co/auth/v1/.well-known/jwks.json
+  storage:
+    # Private bucket name created in Supabase Dashboard → Storage → New bucket (toggle Public OFF)
+    bucket: ticket-attachments
