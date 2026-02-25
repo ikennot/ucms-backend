@@ -79,5 +79,5 @@ The server will start on `http://localhost:8080` by default.
 To get the latest changes from the development branch, run:
 
 ```bash
-git pull origin dev
+git pull origin development
 ```
