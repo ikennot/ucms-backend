@@ -34,7 +34,6 @@ public class SupabaseAuthService {
     ) {
         this.restClient = RestClient.builder()
                 .baseUrl(supabaseUrl)
-                .defaultHeader("apikey", serviceRoleKey)
                 .build();
         this.anonKey = anonKey;
         this.serviceRoleKey = serviceRoleKey;
@@ -55,6 +54,7 @@ public class SupabaseAuthService {
         Map<String, Object> response = executeForMap(
                 restClient.post()
                         .uri("/auth/v1/admin/users")
+                        .header("apikey", serviceRoleKey)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + serviceRoleKey)
                         .body(requestBody)
         );
@@ -112,15 +112,27 @@ public class SupabaseAuthService {
         );
     }
 
-    public void resetPassword(String token, String newPassword) {
-        Map<String, Object> requestBody = Map.of("password", newPassword);
-
-        executeNoBody(
-                restClient.put()
-                        .uri("/auth/v1/user")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                        .body(requestBody)
-        );
+    /**
+     * Deletes a Supabase Auth user by UUID via Admin API.
+     * Used as a compensating transaction if local profile save fails after user creation.
+     * DELETE {supabaseUrl}/auth/v1/admin/users/{authUserId}
+     * Header: Authorization: Bearer {serviceRoleKey}
+     */
+    public void deleteUser(UUID authUserId) {
+        try {
+            restClient.delete()
+                    .uri("/auth/v1/admin/users/" + authUserId)
+                    .header("apikey", serviceRoleKey)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + serviceRoleKey)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (request, response) -> {
+                        String errorBody = new String(response.getBody().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                        log.error("Failed to delete Supabase user {}: {}", authUserId, errorBody);
+                    })
+                    .toBodilessEntity();
+        } catch (Exception ex) {
+            log.error("Failed to delete Supabase user {} during rollback: {}", authUserId, ex.getMessage());
+        }
     }
 
     private Map<String, Object> executeForMap(RestClient.RequestBodySpec requestSpec) {
