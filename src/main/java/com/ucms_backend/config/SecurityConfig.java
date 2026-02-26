@@ -1,5 +1,6 @@
 package com.ucms_backend.config;
 
+import com.ucms_backend.security.RateLimitFilter;
 import com.ucms_backend.security.SupabaseAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,9 +21,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final SupabaseAuthFilter supabaseAuthFilter;
+    private final RateLimitFilter rateLimitFilter;
 
-    public SecurityConfig(SupabaseAuthFilter supabaseAuthFilter) {
+    public SecurityConfig(SupabaseAuthFilter supabaseAuthFilter, RateLimitFilter rateLimitFilter) {
         this.supabaseAuthFilter = supabaseAuthFilter;
+        this.rateLimitFilter = rateLimitFilter;
     }
 
     @Bean
@@ -38,9 +41,9 @@ public class SecurityConfig {
                         .permitAll()
                         .anyRequest()
                         .authenticated())
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(supabaseAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
 }

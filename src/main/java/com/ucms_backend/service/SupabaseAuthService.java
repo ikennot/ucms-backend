@@ -87,10 +87,12 @@ public class SupabaseAuthService {
         Object accessToken = response.get("access_token");
         Object tokenType = response.get("token_type");
         Object expiresIn = response.get("expires_in");
+        Object refreshToken = response.get("refresh_token");
 
         if (!(accessToken instanceof String accessTokenString)
                 || !(tokenType instanceof String tokenTypeString)
-                || !(expiresIn instanceof Number expiresInNumber)) {
+                || !(expiresIn instanceof Number expiresInNumber)
+                || !(refreshToken instanceof String refreshTokenString)) {
             throw supabaseError();
         }
 
@@ -98,6 +100,7 @@ public class SupabaseAuthService {
                 .accessToken(accessTokenString)
                 .tokenType(tokenTypeString)
                 .expiresIn(expiresInNumber.longValue())
+                .refreshToken(refreshTokenString)
                 .build();
     }
 
