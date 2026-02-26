@@ -1,4 +1,4 @@
-package com.ucms_backend.security;
+package com.ucms_backend.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

@@ -1,5 +1,6 @@
-package com.ucms_backend.security;
+package com.ucms_backend.config;
 
+import com.ucms_backend.security.SupabaseAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;

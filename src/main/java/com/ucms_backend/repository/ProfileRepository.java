@@ -1,5 +1,6 @@
-package com.ucms_backend.profile;
+package com.ucms_backend.repository;
 
+import com.ucms_backend.model.entity.Profile;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
