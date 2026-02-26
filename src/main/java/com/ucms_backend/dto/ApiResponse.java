@@ -13,6 +13,7 @@ public class ApiResponse<T> {
 
     private boolean success;
     private String message;
+    private String errorCode;
     private T data;
 
     public static <T> ApiResponse<T> ok(String message, T data) {
@@ -34,6 +35,15 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> error(String message) {
         return ApiResponse.<T>builder()
                 .success(false)
+                .message(message)
+                .data(null)
+                .build();
+    }
+
+    public static <T> ApiResponse<T> error(String errorCode, String message) {
+        return ApiResponse.<T>builder()
+                .success(false)
+                .errorCode(errorCode)
                 .message(message)
                 .data(null)
                 .build();
