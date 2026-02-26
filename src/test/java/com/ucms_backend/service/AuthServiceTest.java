@@ -4,7 +4,6 @@ import com.ucms_backend.dto.AuthResponse;
 import com.ucms_backend.dto.ForgotPasswordRequest;
 import com.ucms_backend.dto.LoginRequest;
 import com.ucms_backend.dto.RegisterRequest;
-import com.ucms_backend.dto.ResetPasswordRequest;
 import com.ucms_backend.exception.AppException;
 import com.ucms_backend.model.entity.Profile;
 import com.ucms_backend.repository.ProfileRepository;
@@ -196,15 +195,6 @@ class AuthServiceTest {
         authService.forgotPassword(request);
 
         verify(supabaseAuthService).sendPasswordResetEmail(eq("jane.student@ucms.local"));
-    }
-
-    @Test
-    void resetPassword_success() {
-        ResetPasswordRequest request = new ResetPasswordRequest("reset-token", "newPassword123");
-
-        authService.resetPassword(request);
-
-        verify(supabaseAuthService).resetPassword(request.getToken(), request.getNewPassword());
     }
 
     private RegisterRequest buildRegisterRequest(String studentId) {

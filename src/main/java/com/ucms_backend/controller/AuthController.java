@@ -5,7 +5,6 @@ import com.ucms_backend.dto.AuthResponse;
 import com.ucms_backend.dto.ForgotPasswordRequest;
 import com.ucms_backend.dto.LoginRequest;
 import com.ucms_backend.dto.RegisterRequest;
-import com.ucms_backend.dto.ResetPasswordRequest;
 import com.ucms_backend.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -43,9 +42,4 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok("Password reset email sent"));
     }
 
-    @PostMapping("/reset-password")
-    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        authService.resetPassword(request);
-        return ResponseEntity.ok(ApiResponse.ok("Password reset successful"));
-    }
 }
