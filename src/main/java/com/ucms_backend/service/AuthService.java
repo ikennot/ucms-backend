@@ -16,7 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AuthService {
 
-    private static final Pattern STUDENT_ID_PATTERN = Pattern.compile("^\\d{4}\\d{4}-[A-Z]$");
+    // Student ID format: YYYYNNNN-C (e.g. 20230733-N) — 8 digits, hyphen, 1 uppercase letter
+    private static final Pattern STUDENT_ID_PATTERN = Pattern.compile("^\\d{8}-[A-Z]$");
 
     private final SupabaseAuthService supabaseAuthService;
     private final ProfileRepository profileRepository;
@@ -75,18 +76,11 @@ public class AuthService {
     }
 
     public void forgotPassword(ForgotPasswordRequest request) {
-        Profile profile = profileRepository.findByStudentId(request.getStudentId())
-                .orElseThrow(() -> new AppException(404, "USER_NOT_FOUND", "Student not found"));
-
-        if (profile.getEmail() == null || !profile.isEmailVerified()) {
-            throw new AppException(
-                    400,
-                    "EMAIL_NOT_VERIFIED",
-                    "Please add and verify your email before resetting your password"
-            );
-        }
-
-        supabaseAuthService.sendPasswordResetEmail(profile.getEmail());
+        profileRepository.findByStudentId(request.getStudentId()).ifPresent(profile -> {
+            if (profile.getEmail() != null && profile.isEmailVerified()) {
+                supabaseAuthService.sendPasswordResetEmail(profile.getEmail());
+            }
+        });
     }
 
 }

@@ -20,7 +20,7 @@
 > **Note:** Password reset is handled entirely by the Android app via Supabase SDK. The backend does not expose a reset-password endpoint.
 
 Notes:
-- Registration uses `student_id` as the primary identifier. Format: `YYYY-NNNN-C` (year + 4-digit student number + campus initial, e.g. `20230733-N`). Supabase Auth is used behind the scenes.
+- Registration uses `student_id` as the primary identifier. Format: `YYYYNNNN-C` (4-digit year + 4-digit student number + campus initial, e.g. `20230733-N`). No hyphen between year and number. Supabase Auth is used behind the scenes.
 - Password reset requires a verified email. If the student has no verified email, return `400` with instructions to add/verify an email.
 
 ---
