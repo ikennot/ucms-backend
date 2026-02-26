@@ -16,7 +16,8 @@
 | POST | `/api/auth/login` | Public | Login with student ID + password |
 | POST | `/api/auth/register` | Public | Register (enrolled students only) |
 | POST | `/api/auth/forgot-password` | Public | Request password reset |
-| POST | `/api/auth/reset-password` | Public | Reset password with token |
+
+> **Note:** Password reset is handled entirely by the Android app via Supabase SDK. The backend does not expose a reset-password endpoint.
 
 Notes:
 - Registration uses `student_id` as the primary identifier. Format: `YYYY-NNNN-C` (year + 4-digit student number + campus initial, e.g. `20230733-N`). Supabase Auth is used behind the scenes.

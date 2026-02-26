@@ -101,33 +101,6 @@
             }
           }
         },
-        {
-          "name": "Reset Password",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"token\": \"PASTE_RESET_TOKEN_HERE\",\n  \"newPassword\": \"newpassword123\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/auth/reset-password",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "reset-password"
-              ]
-            }
-          }
-        }
       ]
     },
     {
