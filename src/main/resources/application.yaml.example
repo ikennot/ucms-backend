@@ -36,6 +36,8 @@ supabase:
   service-role-key: [YOUR-SERVICE-ROLE-KEY]
   # Constructed from your Project URL: https://[YOUR-PROJECT-REF].supabase.co/auth/v1/.well-known/jwks.json
   jwks-uri: https://[YOUR-PROJECT-REF].supabase.co/auth/v1/.well-known/jwks.json
+  # JWT issuer — same as your Supabase project URL + /auth/v1
+  jwt-issuer: https://[YOUR-PROJECT-REF].supabase.co/auth/v1
   storage:
     # Private bucket name created in Supabase Dashboard → Storage → New bucket (toggle Public OFF)
     bucket: ticket-attachments
