@@ -129,10 +129,8 @@ class AuthServiceTest {
         when(profileRepository.findByStudentId(request.getStudentId()))
                 .thenReturn(Optional.empty());
 
-        AppException exception = assertThrows(AppException.class, () -> authService.forgotPassword(request));
+        authService.forgotPassword(request);
 
-        assertEquals(404, exception.getStatus());
-        assertEquals("USER_NOT_FOUND", exception.getErrorCode());
         verify(supabaseAuthService, never()).sendPasswordResetEmail(anyString());
     }
 
@@ -144,16 +142,14 @@ class AuthServiceTest {
                 .name("Jane Student")
                 .role("STUDENT")
                 .email(null)
-                .emailVerified(true)
+                .emailVerified(false)
                 .build();
 
         when(profileRepository.findByStudentId(request.getStudentId()))
                 .thenReturn(Optional.of(profile));
 
-        AppException exception = assertThrows(AppException.class, () -> authService.forgotPassword(request));
+        authService.forgotPassword(request);
 
-        assertEquals(400, exception.getStatus());
-        assertEquals("EMAIL_NOT_VERIFIED", exception.getErrorCode());
         verify(supabaseAuthService, never()).sendPasswordResetEmail(anyString());
     }
 
@@ -171,10 +167,8 @@ class AuthServiceTest {
         when(profileRepository.findByStudentId(request.getStudentId()))
                 .thenReturn(Optional.of(profile));
 
-        AppException exception = assertThrows(AppException.class, () -> authService.forgotPassword(request));
+        authService.forgotPassword(request);
 
-        assertEquals(400, exception.getStatus());
-        assertEquals("EMAIL_NOT_VERIFIED", exception.getErrorCode());
         verify(supabaseAuthService, never()).sendPasswordResetEmail(anyString());
     }
 

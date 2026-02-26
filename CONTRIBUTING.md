@@ -43,6 +43,9 @@ Use this format when opening a PR:
 - [ ] refactor — code change that neither fixes a bug nor adds a feature
 - [ ] test — adding or updating tests
 
+## Labels
+<!-- Apply labels from: priority (p0–p3), type (feat/fix/security/chore/docs/test/refactor), scope (backend/android/infra) -->
+
 ## What Changed
 <!-- Short description of what was changed -->
 
@@ -116,5 +119,35 @@ All PRs to `development` must pass the **Backend CI** workflow before merging.
   - `SPRING_DATASOURCE_USERNAME`
   - `SPRING_DATASOURCE_PASSWORD`
   - `SUPABASE_JWKS_URI`
-  - `SUPABASE_ISSUER`
+  - `SUPABASE_JWT_ISSUER`
 - Do not merge if CI is red
+
+## Labels
+
+Apply labels when creating GitHub issues and PRs. Use one from each relevant group.
+
+### Priority
+| Label | When to use |
+|---|---|
+| `p0-critical` | Security vulnerabilities, data loss, app cannot start |
+| `p1-high` | Broken functionality, must fix before next release |
+| `p2-medium` | Degraded functionality, fix when possible |
+| `p3-low` | Nice to have, no functional impact |
+
+### Type
+| Label | When to use |
+|---|---|
+| `feat` | New feature or endpoint |
+| `fix` | Bug fix |
+| `security` | Security-related fix or hardening |
+| `chore` | Maintenance, dependencies, config |
+| `docs` | Documentation only |
+| `test` | Adding or updating tests |
+| `refactor` | Code change with no feature or fix |
+
+### Scope
+| Label | When to use |
+|---|---|
+| `backend` | Backend only |
+| `android` | Android only |
+| `infra` | CI/CD, GitHub Actions, secrets |
