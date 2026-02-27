@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class TicketNumberGenerator {
 
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private final TicketRepository ticketRepository;
     private final Clock clock;
@@ -20,8 +20,7 @@ public class TicketNumberGenerator {
     }
 
     public String generate() {
-        String datePart = LocalDate.now(clock).format(DATE_FORMAT);
-        String prefix = "TKT-" + datePart + "-";
+        String prefix = "TKT-" + LocalDate.now(clock).format(DATE_FORMATTER) + "-";
         long count = ticketRepository.countByTicketNumberStartingWith(prefix);
         return String.format("%s%04d", prefix, count + 1);
     }
