@@ -1,5 +1,6 @@
 package com.ucms_backend.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,5 +16,10 @@ public class JwtConfig {
     @Bean
     public JwtDecoder jwtDecoder(@Value("${supabase.jwks-uri}") String jwksUri) {
         return NimbusJwtDecoder.withJwkSetUri(jwksUri).build();
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
     }
 }
