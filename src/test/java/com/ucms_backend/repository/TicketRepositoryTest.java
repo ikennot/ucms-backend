@@ -3,7 +3,7 @@ package com.ucms_backend.repository;
 import com.ucms_backend.model.entity.Ticket;
 import com.ucms_backend.model.enums.TicketStatus;
 import java.util.List;
-import java.util.UUID;
+import java.util.UUID; // still used for userId
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -23,7 +23,7 @@ class TicketRepositoryTest {
     void findByUserId_returnsMatchingTickets() {
         UUID userId = UUID.randomUUID();
         Ticket ticket = Ticket.builder()
-                .id(UUID.randomUUID())
+                .id(1L)
                 .userId(userId)
                 .ticketNumber("TKT-20260227-0001")
                 .title("Cannot submit grades")
@@ -53,7 +53,7 @@ class TicketRepositoryTest {
     @Test
     void findAll_withSpecification_returnsFilteredTickets() {
         Ticket ticket = Ticket.builder()
-                .id(UUID.randomUUID())
+                .id(2L)
                 .userId(UUID.randomUUID())
                 .ticketNumber("TKT-20260227-0001")
                 .title("Cannot submit grades")
