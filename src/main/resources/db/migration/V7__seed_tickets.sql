@@ -1,0 +1,108 @@
+INSERT INTO ticket (
+    id,
+    user_id,
+    category_id,
+    ticket_number,
+    title,
+    description,
+    status,
+    confirmed_resolved,
+    created_at,
+    updated_at
+) VALUES
+    (
+        1,
+        'd9201021-562a-43e4-a5a2-fed70ce541a0',
+        1,
+        'TKT-20260228-0001',
+        'Request for advisor consultation',
+        'Need guidance on course sequence for the next semester.',
+        'PENDING',
+        FALSE,
+        '2026-02-28 10:00:00',
+        '2026-02-28 10:00:00'
+    ),
+    (
+        2,
+        'c115ab19-9a6c-46c8-be66-2f27b99b9623',
+        2,
+        'TKT-20260228-0002',
+        'Grade not reflected in portal',
+        'The final grade for Data Structures is missing in the portal.',
+        'IN_PROGRESS',
+        FALSE,
+        '2026-02-28 10:05:00',
+        '2026-02-28 11:10:00'
+    ),
+    (
+        3,
+        '83a13dfa-afe4-48f7-b5d0-02ff2a475c37',
+        3,
+        'TKT-20260228-0003',
+        'AIMS portal access issue',
+        'Unable to log in to AIMS after password reset.',
+        'RESOLVED',
+        TRUE,
+        '2026-02-28 10:15:00',
+        '2026-02-28 12:30:00'
+    ),
+    (
+        4,
+        '82b7de73-be09-45e4-8bed-edd16007da75',
+        4,
+        'TKT-20260228-0004',
+        'ID card replacement request',
+        'Lost student ID and need a replacement processed.',
+        'CLOSED',
+        TRUE,
+        '2026-02-28 10:25:00',
+        '2026-02-28 16:45:00'
+    ),
+    (
+        5,
+        'cda210f3-1176-406b-9d2e-5b05ca921981',
+        5,
+        'TKT-20260228-0005',
+        'Aircon not working in Lab 2',
+        'The AC has been out since yesterday; room is too warm.',
+        'PENDING',
+        FALSE,
+        '2026-02-28 10:40:00',
+        '2026-02-28 10:40:00'
+    ),
+    (
+        6,
+        'eeeb1ae5-4c82-4323-8c25-7ebad9bc91db',
+        6,
+        'TKT-20260228-0006',
+        'Other concern: document request',
+        'Requesting a copy of enrollment verification letter.',
+        'IN_PROGRESS',
+        FALSE,
+        '2026-02-28 10:50:00',
+        '2026-02-28 13:20:00'
+    ),
+    (
+        7,
+        'd9201021-562a-43e4-a5a2-fed70ce541a0',
+        1,
+        'TKT-20260228-0007',
+        'Advising schedule follow-up',
+        'Need confirmation on the updated advising schedule.',
+        'PENDING',
+        FALSE,
+        '2026-02-28 11:05:00',
+        '2026-02-28 11:05:00'
+    ),
+    (
+        8,
+        'c115ab19-9a6c-46c8-be66-2f27b99b9623',
+        2,
+        'TKT-20260228-0008',
+        'Grade appeal inquiry',
+        'Requesting clarification on the grade appeal process.',
+        'IN_PROGRESS',
+        FALSE,
+        '2026-02-28 11:20:00',
+        '2026-02-28 12:10:00'
+    );
