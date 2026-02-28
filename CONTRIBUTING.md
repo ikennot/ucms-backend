@@ -73,6 +73,32 @@ Use this format when opening a PR:
 - [ ] CI passes
 ```
 
+## Issues
+
+### Issue Template
+
+Use this format when creating a new issue:
+
+```markdown
+## Overview
+<!-- Brief description of the feature or bug -->
+
+## Tasks
+<!-- Checklist of implementation steps -->
+- [ ] Task 1
+- [ ] Task 2
+
+## Acceptance Criteria
+<!-- What must be true for this issue to be considered done? -->
+- [ ] Criterion 1
+- [ ] Criterion 2
+
+## References
+<!-- Links to docs, designs, or related issues -->
+```
+
+See [docs/sample-issue.md](docs/sample-issue.md) for a complete example.
+
 ## Code Style
 
 - Follow the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html)
