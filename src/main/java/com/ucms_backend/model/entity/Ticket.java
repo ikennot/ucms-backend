@@ -28,13 +28,13 @@ import lombok.NoArgsConstructor;
 public class Ticket {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(name = "category_id")
+    @Column(name = "category_id", nullable = false)
     private Long categoryId;
 
     @Column(name = "ticket_number", nullable = false, unique = true)
@@ -43,7 +43,7 @@ public class Ticket {
     @Column(nullable = false)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(nullable = false)
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -62,9 +62,13 @@ public class Ticket {
     @PrePersist
     void onPrePersist() {
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
-        if (createdAt == null) createdAt = now;
-        if (updatedAt == null) updatedAt = now;
-        if (status == null) status = TicketStatus.PENDING;
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        updatedAt = now;
+        if (status == null) {
+            status = TicketStatus.PENDING;
+        }
     }
 
     @PreUpdate
