@@ -115,6 +115,22 @@ public class SupabaseAuthService {
         );
     }
 
+    public void sendVerificationEmail(UUID authUserId, String email) {
+        Map<String, Object> requestBody = Map.of(
+                "type", "invite",
+                "email", email,
+                "data", Map.of("auth_user_id", authUserId.toString())
+        );
+
+        executeForMap(
+                restClient.post()
+                        .uri("/auth/v1/admin/generate_link")
+                        .header("apikey", serviceRoleKey)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + serviceRoleKey)
+                        .body(requestBody)
+        );
+    }
+
     /**
      * Deletes a Supabase Auth user by UUID via Admin API.
      * Used as a compensating transaction if local profile save fails after user creation.
