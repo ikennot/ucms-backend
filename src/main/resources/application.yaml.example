@@ -41,3 +41,5 @@ supabase:
   storage:
     # Private bucket name created in Supabase Dashboard → Storage → New bucket (toggle Public OFF)
     bucket: ticket-attachments
+    # Signed URL expiry in seconds (short-lived)
+    signed-url-expiry: 3600
