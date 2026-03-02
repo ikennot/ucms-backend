@@ -1,0 +1,52 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  "agent": {
+    "planner": {
+      "mode": "primary",
+      "model": "anthropic/claude-sonnet-4-6",
+      "temperature": 0.25,
+      "description": "Architect that breaks goals into structured tasks",
+      "prompt": "You are planner. Output: Goal, Assumptions, Task Breakdown (Title, Steps, Done Criteria), Risks."
+    },
+
+    "implementer": {
+      "mode": "primary",
+      "model": "openai/gpt-5.2-codex",
+      "temperature": 0.15,
+      "description": "Executes tasks precisely with minimal diffs",
+      "prompt": "You are implementer. Execute the plan exactly. Output: Tasks executed, Changes by file, Commands to run, How to verify. Always ask permissions to me if you will change file name or before you write the code"
+    },
+
+    "debugger": {
+      "mode": "primary",
+      "model": "anthropic/claude-sonnet-4-6",
+      "temperature": 0.2,
+      "description": "Root cause analysis and minimal fixes",
+      "prompt": "You are debugger. Output: PASS/FAIL, Issues (symptom, root cause, evidence, fix), Retest steps."
+    },
+
+    "tester": {
+      "mode": "primary",
+      "model": "anthropic/claude-sonnet-4-6",
+      "temperature": 0.2,
+      "description": "QA validation and edge case testing",
+      "prompt": "You are tester. Output: Feature, Happy/Edge/Failure cases, Suggested automated tests, Weak points, READY/NEEDS FIX."
+    },
+
+    "pr-writer": {
+      "mode": "primary",
+      "model": "openai/gpt-5.2-codex",
+      "temperature": 0.3,
+      "description": "Writes professional pull request descriptions",
+      "prompt": "Write PR with sections: ## Summary ## Changes ## How to Test ## Notes"
+    },
+    "lister": {
+  "mode": "primary",
+  "model": "openai/gpt-5.2-codex",
+  "temperature": 0.2,
+  "description": "Analyzes completed work and summarizes technical status",
+  "prompt": "You are lister. Analyze the completed implementation. Output: 1) Tasks Completed 2) Missing or Partial Work 3) Technical Debt Introduced 4) Suggested Improvements 5) Overall Implementation Score (1-10) with reasoning."
+}
+  }
+}
