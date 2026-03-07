@@ -29,17 +29,20 @@ public class TicketService {
     private final CategoryRepository categoryRepository;
     private final ProfileRepository profileRepository;
     private final TicketNumberGenerator ticketNumberGenerator;
+    private final NotificationService notificationService;
 
     public TicketService(
             TicketRepository ticketRepository,
             CategoryRepository categoryRepository,
             ProfileRepository profileRepository,
-            TicketNumberGenerator ticketNumberGenerator
+            TicketNumberGenerator ticketNumberGenerator,
+            NotificationService notificationService
     ) {
         this.ticketRepository = ticketRepository;
         this.categoryRepository = categoryRepository;
         this.profileRepository = profileRepository;
         this.ticketNumberGenerator = ticketNumberGenerator;
+        this.notificationService = notificationService;
     }
 
     public TicketResponse createTicket(UUID userId, CreateTicketRequest request) {
@@ -128,6 +131,13 @@ public class TicketService {
 
         ticket.setStatus(next);
         Ticket saved = ticketRepository.save(ticket);
+
+        notificationService.createNotification(
+                saved.getUserId(),
+                saved.getId(),
+                "Your ticket #" + saved.getTicketNumber() + " status has been updated to " + next.name()
+        );
+
         return TicketResponse.from(saved);
     }
 }
