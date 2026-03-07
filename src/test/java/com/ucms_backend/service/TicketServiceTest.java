@@ -40,6 +40,9 @@ class TicketServiceTest {
     @Mock
     private TicketNumberGenerator ticketNumberGenerator;
 
+    @Mock
+    private NotificationService notificationService;
+
     @InjectMocks
     private TicketService ticketService;
 

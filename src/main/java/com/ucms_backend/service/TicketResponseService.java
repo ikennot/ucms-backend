@@ -16,13 +16,16 @@ public class TicketResponseService {
 
     private final TicketRepository ticketRepository;
     private final TicketResponseRepository ticketResponseRepository;
+    private final NotificationService notificationService;
 
     public TicketResponseService(
             TicketRepository ticketRepository,
-            TicketResponseRepository ticketResponseRepository
+            TicketResponseRepository ticketResponseRepository,
+            NotificationService notificationService
     ) {
         this.ticketRepository = ticketRepository;
         this.ticketResponseRepository = ticketResponseRepository;
+        this.notificationService = notificationService;
     }
 
     public TicketResponseDto addResponse(Long ticketId, UUID adminId, String role, CreateResponseRequest request) {
@@ -40,6 +43,13 @@ public class TicketResponseService {
                 .build();
 
         TicketResponse saved = ticketResponseRepository.save(response);
+
+        notificationService.createNotification(
+                ticket.getUserId(),
+                ticket.getId(),
+                "Admin posted a response to your ticket #" + ticket.getTicketNumber()
+        );
+
         return TicketResponseDto.from(saved);
     }
 

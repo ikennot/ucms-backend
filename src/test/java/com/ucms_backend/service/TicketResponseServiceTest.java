@@ -34,6 +34,9 @@ class TicketResponseServiceTest {
     @Mock
     private TicketResponseRepository ticketResponseRepository;
 
+    @Mock
+    private NotificationService notificationService;
+
     @InjectMocks
     private TicketResponseService ticketResponseService;
 
