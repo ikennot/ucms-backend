@@ -18,6 +18,7 @@ public class TicketResponse {
     private String title;
     private String description;
     private String status;
+    private boolean confirmedResolved;
     private Long categoryId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -29,6 +30,7 @@ public class TicketResponse {
                 .title(ticket.getTitle())
                 .description(ticket.getDescription())
                 .status(ticket.getStatus().name())
+                .confirmedResolved(ticket.isConfirmedResolved())
                 .categoryId(ticket.getCategoryId())
                 .createdAt(ticket.getCreatedAt())
                 .updatedAt(ticket.getUpdatedAt())
