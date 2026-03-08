@@ -20,4 +20,6 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
     List<Object[]> countGroupedByCategory();
 
     List<Ticket> findByStatusInOrderByCreatedAtAsc(List<TicketStatus> statuses);
+
+    boolean existsByCategoryId(Long categoryId);
 }
