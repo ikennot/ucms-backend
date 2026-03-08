@@ -20,7 +20,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -268,5 +270,146 @@ class TicketServiceTest {
 
         assertEquals("IN_PROGRESS", response.getStatus());
         verify(ticketRepository).save(ticket);
+    }
+
+    // -------------------------------------------------------------------------
+    // confirmResolved tests
+    // -------------------------------------------------------------------------
+
+    @Test
+    void confirmResolved_success_setsConfirmedTrue() {
+        UUID userId = UUID.randomUUID();
+        Ticket ticket = Ticket.builder()
+                .id(1L)
+                .userId(userId)
+                .status(TicketStatus.RESOLVED)
+                .confirmedResolved(false)
+                .ticketNumber("TKT-20260228-0001")
+                .title("Title")
+                .description("Description")
+                .categoryId(1L)
+                .build();
+        Ticket saved = Ticket.builder()
+                .id(1L)
+                .userId(userId)
+                .status(TicketStatus.RESOLVED)
+                .confirmedResolved(true)
+                .ticketNumber("TKT-20260228-0001")
+                .title("Title")
+                .description("Description")
+                .categoryId(1L)
+                .build();
+
+        when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
+        when(ticketRepository.save(ticket)).thenReturn(saved);
+
+        TicketResponse response = ticketService.confirmResolved(1L, userId);
+
+        assertTrue(response.isConfirmedResolved());
+        assertEquals("RESOLVED", response.getStatus());
+        verify(ticketRepository).save(ticket);
+        verify(notificationService).createNotification(
+                eq(userId),
+                eq(1L),
+                eq("You have confirmed your ticket as resolved.")
+        );
+    }
+
+    @Test
+    void confirmResolved_ticketNotFound_throws404() {
+        UUID userId = UUID.randomUUID();
+
+        when(ticketRepository.findById(99L)).thenReturn(Optional.empty());
+
+        AppException exception = assertThrows(AppException.class,
+                () -> ticketService.confirmResolved(99L, userId));
+
+        assertEquals(404, exception.getStatus());
+        assertEquals("TICKET_NOT_FOUND", exception.getErrorCode());
+    }
+
+    @Test
+    void confirmResolved_notOwner_throws403() {
+        UUID ownerId = UUID.randomUUID();
+        UUID otherId = UUID.randomUUID();
+        Ticket ticket = Ticket.builder()
+                .id(1L)
+                .userId(ownerId)
+                .status(TicketStatus.RESOLVED)
+                .confirmedResolved(false)
+                .build();
+
+        when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
+
+        AppException exception = assertThrows(AppException.class,
+                () -> ticketService.confirmResolved(1L, otherId));
+
+        assertEquals(403, exception.getStatus());
+        assertEquals("FORBIDDEN", exception.getErrorCode());
+        verify(ticketRepository, never()).save(any(Ticket.class));
+    }
+
+    @Test
+    void confirmResolved_wrongStatus_throws409() {
+        UUID userId = UUID.randomUUID();
+        Ticket ticket = Ticket.builder()
+                .id(1L)
+                .userId(userId)
+                .status(TicketStatus.IN_PROGRESS)
+                .confirmedResolved(false)
+                .build();
+
+        when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
+
+        AppException exception = assertThrows(AppException.class,
+                () -> ticketService.confirmResolved(1L, userId));
+
+        assertEquals(409, exception.getStatus());
+        assertEquals("INVALID_STATUS_TRANSITION", exception.getErrorCode());
+        verify(ticketRepository, never()).save(any(Ticket.class));
+    }
+
+    @Test
+    void confirmResolved_alreadyConfirmed_throws409() {
+        UUID userId = UUID.randomUUID();
+        Ticket ticket = Ticket.builder()
+                .id(1L)
+                .userId(userId)
+                .status(TicketStatus.RESOLVED)
+                .confirmedResolved(true)
+                .build();
+
+        when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
+
+        AppException exception = assertThrows(AppException.class,
+                () -> ticketService.confirmResolved(1L, userId));
+
+        assertEquals(409, exception.getStatus());
+        assertEquals("ALREADY_CONFIRMED", exception.getErrorCode());
+        verify(ticketRepository, never()).save(any(Ticket.class));
+    }
+
+    @Test
+    void updateStatus_resolvedToClosedWithoutConfirmation_throws409() {
+        Ticket ticket = Ticket.builder()
+                .id(1L)
+                .userId(UUID.randomUUID())
+                .status(TicketStatus.RESOLVED)
+                .confirmedResolved(false)
+                .ticketNumber("TKT-20260228-0001")
+                .title("Title")
+                .description("Description")
+                .categoryId(1L)
+                .build();
+        UpdateStatusRequest request = new UpdateStatusRequest("CLOSED");
+
+        when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
+
+        AppException exception = assertThrows(AppException.class,
+                () -> ticketService.updateStatus(1L, request));
+
+        assertEquals(409, exception.getStatus());
+        assertEquals("CONFIRMATION_REQUIRED", exception.getErrorCode());
+        verify(ticketRepository, never()).save(any(Ticket.class));
     }
 }

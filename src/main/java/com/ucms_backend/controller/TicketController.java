@@ -71,6 +71,14 @@ public class TicketController {
         return ResponseEntity.ok(ApiResponse.ok("Status updated", ticketResponse));
     }
 
+    @PatchMapping("/{id}/confirm-resolved")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ApiResponse<TicketResponse>> confirmResolved(@PathVariable Long id) {
+        UUID userId = getUserId();
+        TicketResponse ticketResponse = ticketService.confirmResolved(id, userId);
+        return ResponseEntity.ok(ApiResponse.ok("Ticket confirmed as resolved", ticketResponse));
+    }
+
     private UUID getUserId() {
         return (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }

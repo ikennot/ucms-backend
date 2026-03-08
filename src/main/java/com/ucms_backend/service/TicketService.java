@@ -109,6 +109,35 @@ public class TicketService {
         return TicketResponse.from(ticket);
     }
 
+    public TicketResponse confirmResolved(Long ticketId, UUID userId) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new AppException(404, "TICKET_NOT_FOUND", "Ticket not found"));
+
+        if (!ticket.getUserId().equals(userId)) {
+            throw new AppException(403, "FORBIDDEN", "Access denied");
+        }
+
+        if (ticket.getStatus() != TicketStatus.RESOLVED) {
+            throw new AppException(409, "INVALID_STATUS_TRANSITION",
+                    "Ticket must be in RESOLVED status to confirm resolution");
+        }
+
+        if (ticket.isConfirmedResolved()) {
+            throw new AppException(409, "ALREADY_CONFIRMED", "Ticket resolution already confirmed");
+        }
+
+        ticket.setConfirmedResolved(true);
+        Ticket saved = ticketRepository.save(ticket);
+
+        notificationService.createNotification(
+                saved.getUserId(),
+                saved.getId(),
+                "You have confirmed your ticket as resolved."
+        );
+
+        return TicketResponse.from(saved);
+    }
+
     public TicketResponse updateStatus(Long id, UpdateStatusRequest request) {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new AppException(404, "TICKET_NOT_FOUND", "Ticket not found"));
@@ -127,6 +156,13 @@ public class TicketService {
         TicketStatus current = ticket.getStatus();
         if (!next.equals(VALID_TRANSITIONS.get(current))) {
             throw new AppException(400, "INVALID_STATUS_TRANSITION", "Invalid status transition");
+        }
+
+        if (current == TicketStatus.RESOLVED
+                && next == TicketStatus.CLOSED
+                && !ticket.isConfirmedResolved()) {
+            throw new AppException(409, "CONFIRMATION_REQUIRED",
+                    "Student must confirm resolution before the ticket can be closed");
         }
 
         ticket.setStatus(next);
