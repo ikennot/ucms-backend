@@ -9,6 +9,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -19,14 +22,22 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException ex) {
-        String message = "Validation failed";
-        FieldError firstError = ex.getBindingResult().getFieldError();
-        if (firstError != null && firstError.getDefaultMessage() != null) {
-            message = firstError.getDefaultMessage();
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationException(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new LinkedHashMap<>();
+        for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
+            if (fieldError.getDefaultMessage() != null) {
+                errors.put(fieldError.getField(), fieldError.getDefaultMessage());
+            }
         }
 
-        return ResponseEntity.badRequest().body(ApiResponse.error(message));
+        ApiResponse<Map<String, String>> response = ApiResponse.<Map<String, String>>builder()
+                .success(false)
+                .errorCode("VALIDATION_ERROR")
+                .message("Validation failed")
+                .data(errors)
+                .build();
+
+        return ResponseEntity.badRequest().body(response);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
