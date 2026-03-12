@@ -25,6 +25,7 @@ public class SupabaseAuthService {
     private final RestClient restClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final String anonKey;
+    // Security note: this secret is used only for outbound headers and is never logged.
     private final String serviceRoleKey;
 
     public SupabaseAuthService(
@@ -135,7 +136,7 @@ public class SupabaseAuthService {
      * Deletes a Supabase Auth user by UUID via Admin API.
      * Used as a compensating transaction if local profile save fails after user creation.
      * DELETE {supabaseUrl}/auth/v1/admin/users/{authUserId}
-     * Header: Authorization: Bearer {serviceRoleKey}
+     * Header: Authorization: Bearer <service-role-key>
      */
     public void deleteUser(UUID authUserId) {
         try {
