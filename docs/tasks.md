@@ -4,7 +4,7 @@ Audit and harden all security-sensitive surfaces before deployment. Covers input
 ## Tasks
 - [x] Audit all request DTOs — ensure @NotBlank, @Size, @Email, @Pattern annotations are present and correct on every field (CreateTicketRequest, UpdateProfileRequest, UpdateEmailRequest, CreateResponseRequest, CreateCategoryRequest, UpdateCategoryRequest)
 - [x] Add global @Validated enforcement — verify @Valid is applied on all @RequestBody parameters in every controller
-- [ ] File upload constraints — enforce max file size (e.g. 10MB) and allowed MIME types (image/jpeg, image/png, application/pdf) in AttachmentService; reject with 400 INVALID_FILE_TYPE or 413 FILE_TOO_LARGE
+- [x] File upload constraints — enforce max file size (e.g. 10MB) and allowed MIME types (image/jpeg, image/png, application/pdf) in AttachmentService; reject with 400 INVALID_FILE_TYPE or 413 FILE_TOO_LARGE
 - [ ] Signed URL expiry — make expiry duration configurable via application.yaml (e.g. supabase.storage.signed-url-expiry-seconds); default 3600
 - [ ] Rate limiting coverage — verify RateLimitFilter covers all public endpoints (/api/auth/*); confirm protected endpoints are not double-limited
 - [ ] Verify role is always derived from JWT claims — never from request body; audit all service methods
