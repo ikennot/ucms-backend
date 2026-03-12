@@ -7,6 +7,7 @@ import com.ucms_backend.model.entity.Ticket;
 import com.ucms_backend.model.entity.TicketResponse;
 import com.ucms_backend.repository.TicketRepository;
 import com.ucms_backend.repository.TicketResponseRepository;
+import com.ucms_backend.security.SecurityUtils;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -28,10 +29,8 @@ public class TicketResponseService {
         this.notificationService = notificationService;
     }
 
-    public TicketResponseDto addResponse(Long ticketId, UUID adminId, String role, CreateResponseRequest request) {
-        if (!"ADMIN".equals(role)) {
-            throw new AppException(403, "FORBIDDEN", "Access denied");
-        }
+    public TicketResponseDto addResponse(Long ticketId, CreateResponseRequest request) {
+        UUID adminId = SecurityUtils.getCurrentUserId();
 
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new AppException(404, "TICKET_NOT_FOUND", "Ticket not found"));
@@ -53,7 +52,10 @@ public class TicketResponseService {
         return TicketResponseDto.from(saved);
     }
 
-    public List<TicketResponseDto> getResponses(Long ticketId, UUID userId, String role) {
+    public List<TicketResponseDto> getResponses(Long ticketId) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        String role = SecurityUtils.getCurrentRole();
+
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new AppException(404, "TICKET_NOT_FOUND", "Ticket not found"));
 

@@ -9,9 +9,13 @@ import com.ucms_backend.model.enums.TicketStatus;
 import com.ucms_backend.repository.ProfileRepository;
 import com.ucms_backend.repository.TicketAttachmentRepository;
 import com.ucms_backend.repository.TicketRepository;
+import com.ucms_backend.security.SecurityUtils;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import org.apache.tika.Tika;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,20 +26,30 @@ public class AttachmentService {
     private final TicketAttachmentRepository ticketAttachmentRepository;
     private final ProfileRepository profileRepository;
     private final SupabaseStorageService supabaseStorageService;
+    private final long maxSizeBytes;
+    private final Set<String> allowedMimeTypes;
 
     public AttachmentService(
             TicketRepository ticketRepository,
             TicketAttachmentRepository ticketAttachmentRepository,
             ProfileRepository profileRepository,
-            SupabaseStorageService supabaseStorageService
+            SupabaseStorageService supabaseStorageService,
+            @Value("${attachment.max-size-bytes}") long maxSizeBytes,
+            @Value("${attachment.allowed-mime-types}") Set<String> allowedMimeTypes
     ) {
         this.ticketRepository = ticketRepository;
         this.ticketAttachmentRepository = ticketAttachmentRepository;
         this.profileRepository = profileRepository;
         this.supabaseStorageService = supabaseStorageService;
+        this.maxSizeBytes = maxSizeBytes;
+        this.allowedMimeTypes = allowedMimeTypes;
     }
 
-    public AttachmentResponse uploadAttachment(Long ticketId, UUID userId, MultipartFile file) {
+    public AttachmentResponse uploadAttachment(Long ticketId, MultipartFile file) {
+        byte[] content = validateAndReadFile(file);
+        String detectedMimeType = new Tika().detect(content);
+        UUID userId = SecurityUtils.getCurrentUserId();
+
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new AppException(404, "TICKET_NOT_FOUND", "Ticket not found"));
 
@@ -55,29 +69,16 @@ public class AttachmentService {
         }
 
         String originalFilename = sanitizeFilename(file.getOriginalFilename());
-        String mimeType = file.getContentType();
-        if (mimeType == null || mimeType.isBlank()) {
-            mimeType = "application/octet-stream";
-        }
-
-        long sizeBytes = file.getSize();
         String storagePath = buildStoragePath(ticketId, originalFilename);
 
-        byte[] content;
-        try {
-            content = file.getBytes();
-        } catch (IOException ex) {
-            throw new AppException(500, "FILE_READ_ERROR", "Failed to read uploaded file");
-        }
-
-        supabaseStorageService.uploadFile(storagePath, content, mimeType);
+        supabaseStorageService.uploadFile(storagePath, content, detectedMimeType);
 
         TicketAttachment attachment = TicketAttachment.builder()
                 .ticketId(ticketId)
                 .storagePath(storagePath)
                 .originalFilename(originalFilename)
-                .mimeType(mimeType)
-                .sizeBytes(sizeBytes)
+                .mimeType(detectedMimeType)
+                .sizeBytes(file.getSize())
                 .build();
 
         TicketAttachment saved = ticketAttachmentRepository.save(attachment);
@@ -86,7 +87,10 @@ public class AttachmentService {
         return AttachmentResponse.from(saved, signedUrl);
     }
 
-    public List<AttachmentResponse> getAttachments(Long ticketId, UUID userId, String role) {
+    public List<AttachmentResponse> getAttachments(Long ticketId) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        String role = SecurityUtils.getCurrentRole();
+
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new AppException(404, "TICKET_NOT_FOUND", "Ticket not found"));
 
@@ -100,6 +104,28 @@ public class AttachmentService {
                         supabaseStorageService.generateSignedUrl(attachment.getStoragePath())
                 ))
                 .toList();
+    }
+
+    private byte[] validateAndReadFile(MultipartFile file) {
+        if (file.getSize() > maxSizeBytes) {
+            throw new AppException(413, "FILE_TOO_LARGE",
+                    "File exceeds the maximum allowed size of 10MB");
+        }
+
+        byte[] content;
+        try {
+            content = file.getBytes();
+        } catch (IOException ex) {
+            throw new AppException(500, "FILE_READ_ERROR", "Failed to read uploaded file");
+        }
+
+        String detectedMimeType = new Tika().detect(content);
+        if (!allowedMimeTypes.contains(detectedMimeType)) {
+            throw new AppException(400, "INVALID_FILE_TYPE",
+                    "File type not allowed. Accepted types: image/jpeg, image/png, application/pdf");
+        }
+
+        return content;
     }
 
     private String buildStoragePath(Long ticketId, String originalFilename) {

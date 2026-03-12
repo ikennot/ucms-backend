@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 public class UpdateCategoryRequest {
 
     @NotBlank
-    @Size(max = 255)
+    @Size(min = 2, max = 255)
     private String name;
 }

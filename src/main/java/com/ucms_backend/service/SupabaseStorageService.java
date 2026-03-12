@@ -22,6 +22,7 @@ public class SupabaseStorageService {
     private final RestClient restClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final String supabaseUrl;
+    // Security note: this secret is used only for outbound headers and is never logged.
     private final String serviceRoleKey;
     private final String bucket;
     private final int signedUrlExpirySeconds;
