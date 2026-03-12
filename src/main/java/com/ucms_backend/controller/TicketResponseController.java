@@ -6,12 +6,9 @@ import com.ucms_backend.dto.TicketResponseDto;
 import com.ucms_backend.service.TicketResponseService;
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,9 +32,7 @@ public class TicketResponseController {
             @PathVariable Long id,
             @Valid @RequestBody CreateResponseRequest request
     ) {
-        UUID userId = getUserId();
-        String role = getRole();
-        TicketResponseDto response = ticketResponseService.addResponse(id, userId, role, request);
+        TicketResponseDto response = ticketResponseService.addResponse(id, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Response created", response));
     }
@@ -45,18 +40,7 @@ public class TicketResponseController {
     @GetMapping
     @PreAuthorize("hasAnyRole('STUDENT','ADMIN')")
     public ResponseEntity<ApiResponse<List<TicketResponseDto>>> getResponses(@PathVariable Long id) {
-        UUID userId = getUserId();
-        String role = getRole();
-        List<TicketResponseDto> responses = ticketResponseService.getResponses(id, userId, role);
+        List<TicketResponseDto> responses = ticketResponseService.getResponses(id);
         return ResponseEntity.ok(ApiResponse.ok("Responses retrieved", responses));
-    }
-
-    private UUID getUserId() {
-        return (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    }
-
-    private String getRole() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
     }
 }

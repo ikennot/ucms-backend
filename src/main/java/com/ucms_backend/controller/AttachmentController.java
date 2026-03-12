@@ -4,12 +4,9 @@ import com.ucms_backend.dto.ApiResponse;
 import com.ucms_backend.dto.AttachmentResponse;
 import com.ucms_backend.service.AttachmentService;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,8 +31,7 @@ public class AttachmentController {
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file
     ) {
-        UUID userId = getUserId();
-        AttachmentResponse response = attachmentService.uploadAttachment(id, userId, file);
+        AttachmentResponse response = attachmentService.uploadAttachment(id, file);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Attachment uploaded", response));
     }
@@ -43,18 +39,7 @@ public class AttachmentController {
     @GetMapping
     @PreAuthorize("hasAnyRole('STUDENT','ADMIN')")
     public ResponseEntity<ApiResponse<List<AttachmentResponse>>> getAttachments(@PathVariable Long id) {
-        UUID userId = getUserId();
-        String role = getRole();
-        List<AttachmentResponse> response = attachmentService.getAttachments(id, userId, role);
+        List<AttachmentResponse> response = attachmentService.getAttachments(id);
         return ResponseEntity.ok(ApiResponse.ok("Attachments retrieved", response));
-    }
-
-    private UUID getUserId() {
-        return (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    }
-
-    private String getRole() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
     }
 }

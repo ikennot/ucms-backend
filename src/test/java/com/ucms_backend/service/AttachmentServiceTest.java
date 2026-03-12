@@ -14,12 +14,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -63,12 +67,19 @@ class AttachmentServiceTest {
         );
     }
 
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     void upload_ticketNotFound_throws404() {
+        setAuthenticatedUser(UUID.randomUUID(), "STUDENT");
+
         when(ticketRepository.findById(1L)).thenReturn(Optional.empty());
 
         AppException exception = assertThrows(AppException.class, () ->
-                attachmentService.uploadAttachment(1L, UUID.randomUUID(), mockJpegFile())
+                attachmentService.uploadAttachment(1L, mockJpegFile())
         );
 
         assertEquals(404, exception.getStatus());
@@ -84,10 +95,12 @@ class AttachmentServiceTest {
                 .status(TicketStatus.PENDING)
                 .build();
 
+        setAuthenticatedUser(userId, "STUDENT");
+
         when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
 
         AppException exception = assertThrows(AppException.class, () ->
-                attachmentService.uploadAttachment(1L, userId, mockJpegFile())
+                attachmentService.uploadAttachment(1L, mockJpegFile())
         );
 
         assertEquals(403, exception.getStatus());
@@ -108,11 +121,13 @@ class AttachmentServiceTest {
                 .emailVerified(false)
                 .build();
 
+        setAuthenticatedUser(userId, "STUDENT");
+
         when(ticketRepository.findById(2L)).thenReturn(Optional.of(ticket));
         when(profileRepository.findById(userId)).thenReturn(Optional.of(profile));
 
         AppException exception = assertThrows(AppException.class, () ->
-                attachmentService.uploadAttachment(2L, userId, mockJpegFile())
+                attachmentService.uploadAttachment(2L, mockJpegFile())
         );
 
         assertEquals(403, exception.getStatus());
@@ -132,11 +147,13 @@ class AttachmentServiceTest {
                 .emailVerified(true)
                 .build();
 
+        setAuthenticatedUser(userId, "STUDENT");
+
         when(ticketRepository.findById(3L)).thenReturn(Optional.of(ticket));
         when(profileRepository.findById(userId)).thenReturn(Optional.of(profile));
 
         AppException exception = assertThrows(AppException.class, () ->
-                attachmentService.uploadAttachment(3L, userId, mockJpegFile())
+                attachmentService.uploadAttachment(3L, mockJpegFile())
         );
 
         assertEquals(403, exception.getStatus());
@@ -157,11 +174,13 @@ class AttachmentServiceTest {
                 .emailVerified(true)
                 .build();
 
+        setAuthenticatedUser(userId, "STUDENT");
+
         when(ticketRepository.findById(4L)).thenReturn(Optional.of(ticket));
         when(profileRepository.findById(userId)).thenReturn(Optional.of(profile));
 
         AppException exception = assertThrows(AppException.class, () ->
-                attachmentService.uploadAttachment(4L, userId, mockJpegFile())
+                attachmentService.uploadAttachment(4L, mockJpegFile())
         );
 
         assertEquals(403, exception.getStatus());
@@ -182,6 +201,8 @@ class AttachmentServiceTest {
                 .emailVerified(true)
                 .build();
 
+        setAuthenticatedUser(userId, "STUDENT");
+
         when(ticketRepository.findById(5L)).thenReturn(Optional.of(ticket));
         when(profileRepository.findById(userId)).thenReturn(Optional.of(profile));
         when(supabaseStorageService.generateSignedUrl(anyString())).thenReturn("signed-url");
@@ -198,7 +219,7 @@ class AttachmentServiceTest {
                     .build();
         });
 
-        AttachmentResponse response = attachmentService.uploadAttachment(5L, userId, mockJpegFile());
+        AttachmentResponse response = attachmentService.uploadAttachment(5L, mockJpegFile());
 
         assertEquals(10L, response.getId());
         assertEquals("signed-url", response.getSignedUrl());
@@ -214,7 +235,7 @@ class AttachmentServiceTest {
                 "file", "big.jpg", "image/jpeg", bigContent);
 
         AppException exception = assertThrows(AppException.class, () ->
-                attachmentService.uploadAttachment(1L, UUID.randomUUID(), bigFile)
+                attachmentService.uploadAttachment(1L, bigFile)
         );
 
         assertEquals(413, exception.getStatus());
@@ -233,7 +254,7 @@ class AttachmentServiceTest {
                 "#!/bin/bash\necho hi\n".getBytes());
 
         AppException exception = assertThrows(AppException.class, () ->
-                attachmentService.uploadAttachment(1L, UUID.randomUUID(), file)
+                attachmentService.uploadAttachment(1L, file)
         );
 
         assertEquals(400, exception.getStatus());
@@ -244,10 +265,12 @@ class AttachmentServiceTest {
 
     @Test
     void getAttachments_ticketNotFound_throws404() {
+        setAuthenticatedUser(UUID.randomUUID(), "STUDENT");
+
         when(ticketRepository.findById(9L)).thenReturn(Optional.empty());
 
         AppException exception = assertThrows(AppException.class, () ->
-                attachmentService.getAttachments(9L, UUID.randomUUID(), "STUDENT")
+                attachmentService.getAttachments(9L)
         );
 
         assertEquals(404, exception.getStatus());
@@ -276,7 +299,9 @@ class AttachmentServiceTest {
         when(ticketAttachmentRepository.findByTicketId(6L)).thenReturn(List.of(attachment));
         when(supabaseStorageService.generateSignedUrl("tickets/6/one.jpg")).thenReturn("signed-1");
 
-        List<AttachmentResponse> response = attachmentService.getAttachments(6L, userId, "STUDENT");
+        setAuthenticatedUser(userId, "STUDENT");
+
+        List<AttachmentResponse> response = attachmentService.getAttachments(6L);
 
         assertEquals(1, response.size());
         assertEquals("signed-1", response.getFirst().getSignedUrl());
@@ -293,8 +318,10 @@ class AttachmentServiceTest {
 
         when(ticketRepository.findById(7L)).thenReturn(Optional.of(ticket));
 
+        setAuthenticatedUser(userId, "STUDENT");
+
         AppException exception = assertThrows(AppException.class, () ->
-                attachmentService.getAttachments(7L, userId, "STUDENT")
+                attachmentService.getAttachments(7L)
         );
 
         assertEquals(403, exception.getStatus());
@@ -322,7 +349,9 @@ class AttachmentServiceTest {
         when(ticketAttachmentRepository.findByTicketId(8L)).thenReturn(List.of(attachment));
         when(supabaseStorageService.generateSignedUrl("tickets/8/two.jpg")).thenReturn("signed-2");
 
-        List<AttachmentResponse> response = attachmentService.getAttachments(8L, UUID.randomUUID(), "ADMIN");
+        setAuthenticatedUser(UUID.randomUUID(), "ADMIN");
+
+        List<AttachmentResponse> response = attachmentService.getAttachments(8L);
 
         assertEquals(1, response.size());
         assertEquals("signed-2", response.getFirst().getSignedUrl());
@@ -343,5 +372,14 @@ class AttachmentServiceTest {
                 "image/jpeg",
                 jpegMagic
         );
+    }
+
+    private void setAuthenticatedUser(UUID userId, String role) {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                userId,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_" + role))
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 }

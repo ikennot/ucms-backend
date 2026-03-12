@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -48,10 +47,5 @@ public class NotificationController {
 
     private UUID getUserId() {
         return (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    }
-
-    private String getRole() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
     }
 }

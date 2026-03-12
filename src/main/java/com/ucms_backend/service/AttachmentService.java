@@ -9,6 +9,7 @@ import com.ucms_backend.model.enums.TicketStatus;
 import com.ucms_backend.repository.ProfileRepository;
 import com.ucms_backend.repository.TicketAttachmentRepository;
 import com.ucms_backend.repository.TicketRepository;
+import com.ucms_backend.security.SecurityUtils;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
@@ -44,9 +45,10 @@ public class AttachmentService {
         this.allowedMimeTypes = allowedMimeTypes;
     }
 
-    public AttachmentResponse uploadAttachment(Long ticketId, UUID userId, MultipartFile file) {
+    public AttachmentResponse uploadAttachment(Long ticketId, MultipartFile file) {
         byte[] content = validateAndReadFile(file);
         String detectedMimeType = new Tika().detect(content);
+        UUID userId = SecurityUtils.getCurrentUserId();
 
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new AppException(404, "TICKET_NOT_FOUND", "Ticket not found"));
@@ -85,7 +87,10 @@ public class AttachmentService {
         return AttachmentResponse.from(saved, signedUrl);
     }
 
-    public List<AttachmentResponse> getAttachments(Long ticketId, UUID userId, String role) {
+    public List<AttachmentResponse> getAttachments(Long ticketId) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        String role = SecurityUtils.getCurrentRole();
+
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new AppException(404, "TICKET_NOT_FOUND", "Ticket not found"));
 

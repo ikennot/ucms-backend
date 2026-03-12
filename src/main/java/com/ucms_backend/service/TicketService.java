@@ -10,6 +10,7 @@ import com.ucms_backend.model.enums.TicketStatus;
 import com.ucms_backend.repository.CategoryRepository;
 import com.ucms_backend.repository.ProfileRepository;
 import com.ucms_backend.repository.TicketRepository;
+import com.ucms_backend.security.SecurityUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -45,7 +46,8 @@ public class TicketService {
         this.notificationService = notificationService;
     }
 
-    public TicketResponse createTicket(UUID userId, CreateTicketRequest request) {
+    public TicketResponse createTicket(CreateTicketRequest request) {
+        UUID userId = SecurityUtils.getCurrentUserId();
         Profile profile = profileRepository.findById(userId)
                 .orElseThrow(() -> new AppException(404, "PROFILE_NOT_FOUND", "Profile not found"));
 
@@ -71,7 +73,10 @@ public class TicketService {
         return TicketResponse.from(saved);
     }
 
-    public List<TicketResponse> getTickets(UUID userId, String role, String status, Long categoryId) {
+    public List<TicketResponse> getTickets(String status, Long categoryId) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        String role = SecurityUtils.getCurrentRole();
+
         if ("STUDENT".equals(role)) {
             return ticketRepository.findByUserId(userId).stream()
                     .map(TicketResponse::from)
@@ -98,7 +103,10 @@ public class TicketService {
         return List.of();
     }
 
-    public TicketResponse getTicketById(Long id, UUID userId, String role) {
+    public TicketResponse getTicketById(Long id) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        String role = SecurityUtils.getCurrentRole();
+
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new AppException(404, "TICKET_NOT_FOUND", "Ticket not found"));
 
@@ -109,7 +117,9 @@ public class TicketService {
         return TicketResponse.from(ticket);
     }
 
-    public TicketResponse confirmResolved(Long ticketId, UUID userId) {
+    public TicketResponse confirmResolved(Long ticketId) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new AppException(404, "TICKET_NOT_FOUND", "Ticket not found"));
 
