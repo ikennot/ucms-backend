@@ -4,11 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ucms_backend.config.RateLimitConfig;
 import com.ucms_backend.dto.ApiResponse;
 import io.github.bucket4j.Bucket;
+import jakarta.servlet.ReadListener;
+import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -41,6 +48,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
         String ip = resolveClientIp(request);
+        HttpServletRequest requestForChain = request;
 
         if (LOGIN_PATH.equals(path)) {
             if (!rateLimitConfig.loginBucket(ip).tryConsume(1)) {
@@ -57,14 +65,19 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 rejectWithTooManyRequests(response);
                 return;
             }
-            String studentId = extractStudentId(request);
+            CachedBodyRequestWrapper wrappedRequest = new CachedBodyRequestWrapper(request);
+            requestForChain = wrappedRequest;
+
+            String studentId = extractStudentId(wrappedRequest);
             if (studentId != null && !rateLimitConfig.forgotPasswordIdBucket(studentId).tryConsume(1)) {
                 rejectWithTooManyRequests(response);
                 return;
             }
         }
 
-        filterChain.doFilter(request, response);
+        // Only /api/auth/* endpoints above are rate-limited; all other endpoints
+        // pass through once and are not double-limited.
+        filterChain.doFilter(requestForChain, response);
     }
 
     private String resolveClientIp(HttpServletRequest request) {
@@ -75,12 +88,26 @@ public class RateLimitFilter extends OncePerRequestFilter {
         return request.getRemoteAddr();
     }
 
-    private String extractStudentId(HttpServletRequest request) {
-        // Read studentId from query param or cached body — for POST JSON bodies
-        // we rely on the request param fallback; full body parsing is handled by
-        // the controller. For rate limiting purposes, IP-only is the primary guard;
-        // student ID keying is best-effort here.
-        return request.getParameter("studentId");
+    private String extractStudentId(CachedBodyRequestWrapper request) {
+        String studentIdFromBody = extractStudentIdFromBody(request.getCachedBody());
+        if (studentIdFromBody != null) {
+            return studentIdFromBody;
+        }
+
+        String studentIdFromParam = request.getParameter("studentId");
+        return studentIdFromParam == null || studentIdFromParam.isBlank() ? null : studentIdFromParam;
+    }
+
+    private String extractStudentIdFromBody(byte[] body) {
+        if (body.length == 0) {
+            return null;
+        }
+        try {
+            String studentId = objectMapper.readTree(body).path("studentId").asText(null);
+            return studentId == null || studentId.isBlank() ? null : studentId;
+        } catch (IOException ex) {
+            return null;
+        }
     }
 
     private void rejectWithTooManyRequests(HttpServletResponse response) throws IOException {
@@ -90,5 +117,49 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 "RATE_LIMIT_EXCEEDED",
                 "Too many requests. Please try again later.");
         response.getWriter().write(objectMapper.writeValueAsString(body));
+    }
+
+    private static final class CachedBodyRequestWrapper extends HttpServletRequestWrapper {
+        private final byte[] cachedBody;
+
+        private CachedBodyRequestWrapper(HttpServletRequest request) throws IOException {
+            super(request);
+            this.cachedBody = request.getInputStream().readAllBytes();
+        }
+
+        private byte[] getCachedBody() {
+            return cachedBody;
+        }
+
+        @Override
+        public ServletInputStream getInputStream() {
+            ByteArrayInputStream bodyStream = new ByteArrayInputStream(cachedBody);
+            return new ServletInputStream() {
+                @Override
+                public int read() {
+                    return bodyStream.read();
+                }
+
+                @Override
+                public boolean isFinished() {
+                    return bodyStream.available() == 0;
+                }
+
+                @Override
+                public boolean isReady() {
+                    return true;
+                }
+
+                @Override
+                public void setReadListener(ReadListener readListener) {
+                    throw new UnsupportedOperationException();
+                }
+            };
+        }
+
+        @Override
+        public BufferedReader getReader() {
+            return new BufferedReader(new InputStreamReader(getInputStream(), StandardCharsets.UTF_8));
+        }
     }
 }
