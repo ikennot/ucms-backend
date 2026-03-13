@@ -2,6 +2,7 @@ package com.ucms_backend.config;
 
 import com.ucms_backend.security.RateLimitFilter;
 import com.ucms_backend.security.SupabaseAuthFilter;
+import com.ucms_backend.security.UnauthorizedEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -22,10 +23,16 @@ public class SecurityConfig {
 
     private final SupabaseAuthFilter supabaseAuthFilter;
     private final RateLimitFilter rateLimitFilter;
+    private final UnauthorizedEntryPoint unauthorizedEntryPoint;
 
-    public SecurityConfig(SupabaseAuthFilter supabaseAuthFilter, RateLimitFilter rateLimitFilter) {
+    public SecurityConfig(
+            SupabaseAuthFilter supabaseAuthFilter,
+            RateLimitFilter rateLimitFilter,
+            UnauthorizedEntryPoint unauthorizedEntryPoint
+    ) {
         this.supabaseAuthFilter = supabaseAuthFilter;
         this.rateLimitFilter = rateLimitFilter;
+        this.unauthorizedEntryPoint = unauthorizedEntryPoint;
     }
 
     @Bean
@@ -33,6 +40,8 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint(unauthorizedEntryPoint))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST,
                                 "/api/auth/register",

@@ -252,7 +252,7 @@ class TicketServiceTest {
     }
 
     @Test
-    void updateStatus_invalidTransition_throws400() {
+    void updateStatus_invalidTransition_throws409() {
         Ticket ticket = Ticket.builder()
                 .id(1L)
                 .status(TicketStatus.PENDING)
@@ -263,7 +263,7 @@ class TicketServiceTest {
 
         AppException exception = assertThrows(AppException.class, () -> ticketService.updateStatus(1L, request));
 
-        assertEquals(400, exception.getStatus());
+        assertEquals(409, exception.getStatus());
         assertEquals("INVALID_STATUS_TRANSITION", exception.getErrorCode());
     }
 
