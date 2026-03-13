@@ -30,7 +30,7 @@ All detailed docs live in [`docs/`](docs/).
 | [`docs/roles-permissions.md`](docs/roles-permissions.md) | Roles, permissions matrix, and enforcement rules |
 | [`docs/ticket-status-flow.md`](docs/ticket-status-flow.md) | Ticket state diagram and valid transitions |
 | [`docs/migration-runbook.md`](docs/migration-runbook.md) | DB migrations and full team setup guide |
-| [`docs/postman/UCMS-Auth.postman_collection.json`](docs/postman/UCMS-Auth.postman_collection.json) | Postman collection for all endpoints |
+| [`docs/postman/UCMS-Full.postman_collection.json`](docs/postman/UCMS-Full.postman_collection.json) | Postman collection for all endpoints |
 
 Also see:
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — branch naming, commit messages, PR template, code style
@@ -97,7 +97,7 @@ com.ucms_backend/
 2. Click **Import** (top left)
 3. Select **File** and navigate to:
    ```
-   docs/postman/UCMS-Auth.postman_collection.json
+   docs/postman/UCMS-Full.postman_collection.json
    ```
 4. Click **Import**
 
@@ -111,6 +111,7 @@ com.ucms_backend/
 |---|---|---|
 | `base_url` | `http://localhost:8080` | Change for staging/prod |
 | `access_token` | *(leave blank)* | Auto-filled after Login |
+| `admin_token` | *(leave blank)* | Set this to an admin JWT for admin-only routes |
 
 4. Click **Save**, then select `UCMS Local` from the environment dropdown (top right)
 
@@ -118,7 +119,8 @@ com.ucms_backend/
 
 - Run **Register** to create an account
 - Run **Login** — the access token is automatically saved to `{{access_token}}`
-- All protected routes use `{{access_token}}` automatically
+- Student and shared protected routes use `{{access_token}}` automatically
+- Admin-only routes use `{{admin_token}}` (set this manually from an admin login)
 
 ---
 
