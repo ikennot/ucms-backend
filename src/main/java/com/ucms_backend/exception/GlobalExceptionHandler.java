@@ -1,13 +1,10 @@
 package com.ucms_backend.exception;
 
 import com.ucms_backend.dto.ApiResponse;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -25,22 +22,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationException(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new LinkedHashMap<>();
-        for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
-            if (fieldError.getDefaultMessage() != null) {
-                errors.put(fieldError.getField(), fieldError.getDefaultMessage());
-            }
-        }
-
-        ApiResponse<Map<String, String>> response = ApiResponse.<Map<String, String>>builder()
-                .success(false)
-                .errorCode("VALIDATION_ERROR")
-                .message("Validation failed")
-                .data(errors)
-                .build();
-
-        return ResponseEntity.badRequest().body(response);
+    public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException ex) {
+        return ResponseEntity.badRequest().body(ApiResponse.error("VALIDATION_ERROR", "Validation failed"));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

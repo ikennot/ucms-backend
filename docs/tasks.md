@@ -5,7 +5,7 @@ Audit every endpoint to ensure all error responses use a consistent errorCode st
 - [x] Define master error code registry — document all errorCode values in docs/error-codes.md (e.g. ACCOUNT_LIMITED, TICKET_NOT_FOUND, CATEGORY_IN_USE, INVALID_STATUS_TRANSITION, CONFIRMATION_REQUIRED, VALIDATION_ERROR, FORBIDDEN, UNAUTHORIZED, FILE_TOO_LARGE, INVALID_FILE_TYPE, NOTIFICATION_NOT_FOUND, ALREADY_CONFIRMED, CATEGORY_ALREADY_EXISTS)
 - [x] Audit GlobalExceptionHandler — ensure every exception type maps to a documented errorCode
 - [x] Audit all service layer throws — replace any generic RuntimeException with typed AppException with errorCode
-- [ ] Verify ApiResponse<T> error shape is consistent: { status, message, errorCode, data: null } on all error responses
+- [x] Verify ApiResponse<T> error shape is consistent: { status, message, errorCode, data: null } on all error responses
 - [x] Update unit tests to assert errorCode field in error responses
 
 ## Acceptance Criteria
