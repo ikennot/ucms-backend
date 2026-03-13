@@ -95,6 +95,6 @@ public class GlobalExceptionHandler {
         }
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Internal server error"));
+                .body(ApiResponse.error("INTERNAL_SERVER_ERROR", "Internal server error"));
     }
 }

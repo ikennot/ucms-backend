@@ -31,6 +31,12 @@ Response shape target:
 | `ACCOUNT_LIMITED` | 403 Forbidden | Account does not meet requirements for this action (for example, unverified email). | Thrown by `TicketService` and `AttachmentService`. |
 | `TICKET_CLOSED` | 403 Forbidden | Action cannot be performed because the ticket is closed. | Thrown by `TicketService` and `AttachmentService`. |
 
+## 401 Unauthorized
+
+| errorCode | HTTP Status | Description | Notes |
+| --- | --- | --- | --- |
+| `UNAUTHORIZED` | 401 Unauthorized | Missing, invalid, or expired authentication credentials. | Returned by Spring Security authentication entry point and token auth filter. |
+
 ## 404 Not Found
 
 | errorCode | HTTP Status | Description | Notes |
@@ -49,7 +55,7 @@ Response shape target:
 | `CATEGORY_IN_USE` | 409 Conflict | Category cannot be deleted because it is still referenced. | Thrown by `CategoryService`. |
 | `ALREADY_CONFIRMED` | 409 Conflict | Ticket resolution has already been confirmed. | Thrown by `TicketService`. |
 | `CONFIRMATION_REQUIRED` | 409 Conflict | Ticket cannot be closed until student confirmation is completed. | Thrown by `TicketService`. |
-| `INVALID_STATUS_TRANSITION` | 409 Conflict | Requested ticket status transition is not allowed. | Canonical status is 409; current code has some 400 responses that should be normalized in audit tasks. |
+| `INVALID_STATUS_TRANSITION` | 409 Conflict | Requested ticket status transition is not allowed. | Thrown by `TicketService`. |
 
 ## 413 Payload Too Large
 
@@ -63,7 +69,7 @@ Response shape target:
 | --- | --- | --- | --- |
 | `REGISTRATION_FAILED` | 500 Internal Server Error | Registration failed due to an internal server-side issue. | Thrown by `AuthService`. |
 | `FILE_READ_ERROR` | 500 Internal Server Error | Server failed to read uploaded file bytes. | Thrown by `AttachmentService`. |
-| `INTERNAL_SERVER_ERROR` | 500 Internal Server Error | Unhandled server error fallback. | Declared as required canonical code; current generic exception fallback still returns null `errorCode` and must be updated in audit tasks. |
+| `INTERNAL_SERVER_ERROR` | 500 Internal Server Error | Unhandled server error fallback. | Thrown by `GlobalExceptionHandler` generic fallback. |
 
 ## 502 Bad Gateway
 

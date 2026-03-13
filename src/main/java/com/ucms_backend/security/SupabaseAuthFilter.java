@@ -83,7 +83,8 @@ public class SupabaseAuthFilter extends OncePerRequestFilter {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
         response.getWriter().write(
-                "{\"success\": false, \"message\": \"" + message + "\", \"data\": null}"
+                "{\"success\": false, \"message\": \"" + message
+                        + "\", \"errorCode\": \"UNAUTHORIZED\", \"data\": null}"
         );
     }
 }

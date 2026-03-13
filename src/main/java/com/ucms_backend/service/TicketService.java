@@ -160,12 +160,12 @@ public class TicketService {
         try {
             next = TicketStatus.valueOf(request.getStatus());
         } catch (IllegalArgumentException ex) {
-            throw new AppException(400, "INVALID_STATUS_TRANSITION", "Invalid status transition");
+            throw new AppException(409, "INVALID_STATUS_TRANSITION", "Invalid status transition");
         }
 
         TicketStatus current = ticket.getStatus();
         if (!next.equals(VALID_TRANSITIONS.get(current))) {
-            throw new AppException(400, "INVALID_STATUS_TRANSITION", "Invalid status transition");
+            throw new AppException(409, "INVALID_STATUS_TRANSITION", "Invalid status transition");
         }
 
         if (current == TicketStatus.RESOLVED
