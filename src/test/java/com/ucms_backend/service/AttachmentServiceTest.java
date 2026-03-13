@@ -1,5 +1,6 @@
 package com.ucms_backend.service;
 
+import com.ucms_backend.config.AttachmentProperties;
 import com.ucms_backend.dto.AttachmentResponse;
 import com.ucms_backend.exception.AppException;
 import com.ucms_backend.model.entity.Profile;
@@ -57,13 +58,16 @@ class AttachmentServiceTest {
 
     @BeforeEach
     void setUp() {
+        AttachmentProperties attachmentProperties = new AttachmentProperties();
+        attachmentProperties.setMaxSizeBytes(MAX_SIZE_BYTES);
+        attachmentProperties.setAllowedMimeTypes(ALLOWED_MIME_TYPES);
+
         attachmentService = new AttachmentService(
                 ticketRepository,
                 ticketAttachmentRepository,
                 profileRepository,
                 supabaseStorageService,
-                MAX_SIZE_BYTES,
-                ALLOWED_MIME_TYPES
+                attachmentProperties
         );
     }
 

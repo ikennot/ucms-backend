@@ -1,5 +1,6 @@
 package com.ucms_backend.service;
 
+import com.ucms_backend.config.AttachmentProperties;
 import com.ucms_backend.dto.AttachmentResponse;
 import com.ucms_backend.exception.AppException;
 import com.ucms_backend.model.entity.Profile;
@@ -15,7 +16,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.apache.tika.Tika;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,15 +34,14 @@ public class AttachmentService {
             TicketAttachmentRepository ticketAttachmentRepository,
             ProfileRepository profileRepository,
             SupabaseStorageService supabaseStorageService,
-            @Value("${attachment.max-size-bytes}") long maxSizeBytes,
-            @Value("${attachment.allowed-mime-types}") Set<String> allowedMimeTypes
+            AttachmentProperties attachmentProperties
     ) {
         this.ticketRepository = ticketRepository;
         this.ticketAttachmentRepository = ticketAttachmentRepository;
         this.profileRepository = profileRepository;
         this.supabaseStorageService = supabaseStorageService;
-        this.maxSizeBytes = maxSizeBytes;
-        this.allowedMimeTypes = allowedMimeTypes;
+        this.maxSizeBytes = attachmentProperties.getMaxSizeBytes();
+        this.allowedMimeTypes = attachmentProperties.getAllowedMimeTypes();
     }
 
     public AttachmentResponse uploadAttachment(Long ticketId, MultipartFile file) {
