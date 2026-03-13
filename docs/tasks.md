@@ -1,23 +1,26 @@
 ## Overview
-Audit every endpoint to ensure all error responses use a consistent errorCode string in the ApiResponse wrapper. Error codes must be SCREAMING_SNAKE_CASE, descriptive, and documented. This ensures the Android client can handle errors programmatically without parsing messages.
+The existing Postman collection (UCMS-Auth.postman_collection.json) only covers auth endpoints. Expand it to cover all endpoints added in Phase 3 (Profile, Attachments, Responses, Notifications, Analytics) and Phase 4 (confirm-resolved, Categories CRUD). Collection must use environment variables and include example request/response bodies.
 
 ## Tasks
-- [x] Define master error code registry — document all errorCode values in docs/error-codes.md (e.g. ACCOUNT_LIMITED, TICKET_NOT_FOUND, CATEGORY_IN_USE, INVALID_STATUS_TRANSITION, CONFIRMATION_REQUIRED, VALIDATION_ERROR, FORBIDDEN, UNAUTHORIZED, FILE_TOO_LARGE, INVALID_FILE_TYPE, NOTIFICATION_NOT_FOUND, ALREADY_CONFIRMED, CATEGORY_ALREADY_EXISTS)
-- [x] Audit GlobalExceptionHandler — ensure every exception type maps to a documented errorCode
-- [x] Audit all service layer throws — replace any generic RuntimeException with typed AppException with errorCode
-- [x] Verify ApiResponse<T> error shape is consistent: { status, message, errorCode, data: null } on all error responses
-- [x] Update unit tests to assert errorCode field in error responses
+- [x] Add Profile folder — GET /api/users/me, PUT /api/users/me, PUT /api/users/me/email (with example bodies)
+- [x] Add Tickets folder — POST /api/tickets, GET /api/tickets, GET /api/tickets/{id}, PATCH /api/tickets/{id}/status, PATCH /api/tickets/{id}/confirm-resolved (with example bodies and status values)
+- [x] Add Attachments folder — POST /api/tickets/{id}/attachments (multipart/form-data), GET /api/tickets/{id}/attachments
+- [x] Add Responses folder — POST /api/tickets/{id}/responses, GET /api/tickets/{id}/responses
+- [x] Add Notifications folder — GET /api/notifications, PATCH /api/notifications/{id}/read, PATCH /api/notifications/read-all
+- [x] Add Analytics folder — GET /api/analytics/summary, GET /api/analytics/by-category, GET /api/analytics/unresolved
+- [x] Add Categories folder — GET /api/categories, POST /api/categories, PUT /api/categories/{id}, DELETE /api/categories/{id}
+- [x] All requests use {{base_url}} and {{access_token}} environment variables
+- [x] Add admin_token environment variable for admin-only endpoints
+- [x] Save updated collection to docs/postman/UCMS-Full.postman_collection.json
 
 ## Acceptance Criteria
-- docs/error-codes.md exists and lists all errorCode values with HTTP status and description
-- Every error response from the API includes a non-null errorCode field
-- No endpoint returns a generic 500 for a known business rule violation
-- GlobalExceptionHandler covers all AppException subtypes
-- Unit tests assert errorCode on all error scenarios
-- ./mvnw test passes
+- Collection covers all endpoints in docs/api-contract.md plus PATCH /api/tickets/{id}/confirm-resolved
+- All requests use environment variables (no hardcoded URLs or tokens)
+- Each request has an example response body saved
+- Collection imports cleanly into Postman with no errors
+- README.md updated to reference UCMS-Full.postman_collection.json
 
 ## References
-- src/main/java/com/ucms_backend/exception/GlobalExceptionHandler.java
-- src/main/java/com/ucms_backend/exception/AppException.java
-- src/main/java/com/ucms_backend/dto/ApiResponse.java
-- src/main/java/com/ucms_backend/service/
+- docs/api-contract.md — full endpoint list
+- docs/postman/UCMS-Auth.postman_collection.json — existing collection
+- README.md — Postman usage section
