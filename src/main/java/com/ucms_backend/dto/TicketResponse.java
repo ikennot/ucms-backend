@@ -1,5 +1,6 @@
 package com.ucms_backend.dto;
 
+import com.ucms_backend.model.entity.Category;
 import com.ucms_backend.model.entity.Ticket;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -20,10 +21,11 @@ public class TicketResponse {
     private String status;
     private boolean confirmedResolved;
     private Long categoryId;
+    private String categoryName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static TicketResponse from(Ticket ticket) {
+    public static TicketResponse from(Ticket ticket, String categoryName) {
         return TicketResponse.builder()
                 .id(ticket.getId())
                 .ticketNumber(ticket.getTicketNumber())
@@ -32,6 +34,7 @@ public class TicketResponse {
                 .status(ticket.getStatus().name())
                 .confirmedResolved(ticket.isConfirmedResolved())
                 .categoryId(ticket.getCategoryId())
+                .categoryName(categoryName)
                 .createdAt(ticket.getCreatedAt())
                 .updatedAt(ticket.getUpdatedAt())
                 .build();

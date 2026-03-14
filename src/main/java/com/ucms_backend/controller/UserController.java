@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,6 +49,14 @@ public class UserController {
         UUID userId = getUserId();
         ProfileResponse response = profileService.updateEmail(userId, request);
         return ResponseEntity.ok(ApiResponse.ok("Email update initiated", response));
+    }
+
+    @PatchMapping("/me/email/verify")
+    @PreAuthorize("hasAnyRole('STUDENT','ADMIN')")
+    public ResponseEntity<ApiResponse<ProfileResponse>> confirmEmailVerified() {
+        UUID userId = getUserId();
+        ProfileResponse response = profileService.confirmEmailVerified(userId);
+        return ResponseEntity.ok(ApiResponse.ok("Email marked as verified", response));
     }
 
     private UUID getUserId() {

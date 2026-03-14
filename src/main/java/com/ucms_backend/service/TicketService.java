@@ -4,6 +4,7 @@ import com.ucms_backend.dto.CreateTicketRequest;
 import com.ucms_backend.dto.TicketResponse;
 import com.ucms_backend.dto.UpdateStatusRequest;
 import com.ucms_backend.exception.AppException;
+import com.ucms_backend.model.entity.Category;
 import com.ucms_backend.model.entity.Profile;
 import com.ucms_backend.model.entity.Ticket;
 import com.ucms_backend.model.enums.TicketStatus;
@@ -46,6 +47,16 @@ public class TicketService {
         this.notificationService = notificationService;
     }
 
+    private String resolveCategoryName(Long categoryId) {
+        return categoryRepository.findById(categoryId)
+                .map(Category::getName)
+                .orElse(null);
+    }
+
+    private TicketResponse toResponse(Ticket ticket) {
+        return TicketResponse.from(ticket, resolveCategoryName(ticket.getCategoryId()));
+    }
+
     public TicketResponse createTicket(CreateTicketRequest request) {
         UUID userId = SecurityUtils.getCurrentUserId();
         Profile profile = profileRepository.findById(userId)
@@ -70,7 +81,7 @@ public class TicketService {
                 .build();
 
         Ticket saved = ticketRepository.save(ticket);
-        return TicketResponse.from(saved);
+        return toResponse(saved);
     }
 
     public List<TicketResponse> getTickets(String status, Long categoryId) {
@@ -79,7 +90,7 @@ public class TicketService {
 
         if ("STUDENT".equals(role)) {
             return ticketRepository.findByUserId(userId).stream()
-                    .map(TicketResponse::from)
+                    .map(this::toResponse)
                     .toList();
         }
 
@@ -96,7 +107,7 @@ public class TicketService {
             }
 
             return ticketRepository.findAll(spec).stream()
-                    .map(TicketResponse::from)
+                    .map(this::toResponse)
                     .toList();
         }
 
@@ -114,7 +125,7 @@ public class TicketService {
             throw new AppException(403, "FORBIDDEN", "Access denied");
         }
 
-        return TicketResponse.from(ticket);
+        return toResponse(ticket);
     }
 
     public TicketResponse confirmResolved(Long ticketId) {
@@ -145,7 +156,7 @@ public class TicketService {
                 "You have confirmed your ticket as resolved."
         );
 
-        return TicketResponse.from(saved);
+        return toResponse(saved);
     }
 
     public TicketResponse updateStatus(Long id, UpdateStatusRequest request) {
@@ -184,6 +195,6 @@ public class TicketService {
                 "Your ticket #" + saved.getTicketNumber() + " status has been updated to " + next.name()
         );
 
-        return TicketResponse.from(saved);
+        return toResponse(saved);
     }
 }
