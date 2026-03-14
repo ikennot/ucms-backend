@@ -2,8 +2,8 @@
 Deploy the UCMS backend to Railway or Render (free tier). Configure all required environment variables, add a health check endpoint, and document the deployment process. The backend must connect to the shared Supabase project in production.
 
 ## Tasks
-- [ ] Add GET /api/health endpoint — returns 200 { status: UP, timestamp } — no auth required; used by platform health checks
-- [ ] Create application-prod.yaml profile — production-safe config (no debug logging, ddl-auto=none, connection pool tuned)
+- [x] Add GET /api/health endpoint — returns 200 { status: UP, timestamp } — no auth required; used by platform health checks
+- [x] Create application-prod.yaml profile — production-safe config (no debug logging, ddl-auto=none, connection pool tuned)
 - [ ] Document all required environment variables in README.md under a Deployment section: SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME, SPRING_DATASOURCE_PASSWORD, SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWKS_URI, SUPABASE_JWT_ISSUER, SUPABASE_STORAGE_SIGNED_URL_EXPIRY_SECONDS
 - [ ] Add Dockerfile (or verify Railway/Render native Java 21 buildpack works)
 - [ ] Configure platform health check path to /api/health
