@@ -54,6 +54,21 @@ public class ProfileService {
         return ProfileResponse.from(saved);
     }
 
+    public ProfileResponse confirmEmailVerified(UUID authUserId) {
+        Profile profile = profileRepository.findById(authUserId)
+                .orElseThrow(() -> new AppException(404, "PROFILE_NOT_FOUND", "Profile not found"));
+
+        ensureOwner(profile, authUserId);
+
+        if (profile.getEmail() == null || profile.getEmail().isBlank()) {
+            throw new AppException(400, "EMAIL_REQUIRED", "Email is required before verification");
+        }
+
+        profile.setEmailVerified(true);
+        Profile saved = profileRepository.save(profile);
+        return ProfileResponse.from(saved);
+    }
+
     private void ensureOwner(Profile profile, UUID authUserId) {
         if (!profile.getAuthUserId().equals(authUserId)) {
             throw new AppException(403, "FORBIDDEN", "Access denied");

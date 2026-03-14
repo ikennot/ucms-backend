@@ -62,6 +62,13 @@ public class AnalyticsService {
             List.of(TicketStatus.PENDING, TicketStatus.IN_PROGRESS)
         );
 
-        return tickets.stream().map(TicketResponse::from).toList();
+        return tickets.stream()
+            .map(ticket -> {
+                String categoryName = categoryRepository.findById(ticket.getCategoryId())
+                    .map(com.ucms_backend.model.entity.Category::getName)
+                    .orElse(null);
+                return TicketResponse.from(ticket, categoryName);
+            })
+            .toList();
     }
 }

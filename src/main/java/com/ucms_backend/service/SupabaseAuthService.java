@@ -27,17 +27,20 @@ public class SupabaseAuthService {
     private final String anonKey;
     // Security note: this secret is used only for outbound headers and is never logged.
     private final String serviceRoleKey;
+    private final EmailService emailService;
 
     public SupabaseAuthService(
             @Value("${supabase.url}") String supabaseUrl,
             @Value("${supabase.anon-key}") String anonKey,
-            @Value("${supabase.service-role-key}") String serviceRoleKey
+            @Value("${supabase.service-role-key}") String serviceRoleKey,
+            EmailService emailService
     ) {
         this.restClient = RestClient.builder()
                 .baseUrl(supabaseUrl)
                 .build();
         this.anonKey = anonKey;
         this.serviceRoleKey = serviceRoleKey;
+        this.emailService = emailService;
     }
 
     public UUID createUser(String studentId, String password) {
@@ -118,18 +121,29 @@ public class SupabaseAuthService {
 
     public void sendVerificationEmail(UUID authUserId, String email) {
         Map<String, Object> requestBody = Map.of(
-                "type", "invite",
+                "type", "magiclink",
                 "email", email,
+                "redirect_to", "ucms://email-verified",
                 "data", Map.of("auth_user_id", authUserId.toString())
         );
 
-        executeForMap(
+        Map<String, Object> response = executeForMap(
                 restClient.post()
                         .uri("/auth/v1/admin/generate_link")
                         .header("apikey", serviceRoleKey)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + serviceRoleKey)
                         .body(requestBody)
         );
+
+        Object actionLink = response.get("action_link");
+        if (!(actionLink instanceof String actionLinkString)) {
+            log.error("Supabase generate_link did not return action_link: {}", response);
+            throw supabaseError();
+        }
+
+        log.info("Generated action_link type={} link={}", "magiclink", actionLinkString);
+
+        emailService.sendVerificationEmail(email, actionLinkString);
     }
 
     /**
@@ -202,6 +216,6 @@ public class SupabaseAuthService {
     }
 
     private String toUcsmLocalEmail(String studentId) {
-        return studentId + "@ucms.local";
+        return studentId.trim().toLowerCase() + "@ucms.local";
     }
 }
