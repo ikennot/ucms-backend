@@ -97,15 +97,19 @@ public class SupabaseStorageService {
                 throw new AppException(502, STORAGE_ERROR_CODE, STORAGE_ERROR_MESSAGE);
             }
 
-if (signedUrl.startsWith("http")) {
-    // Ensure /storage/v1 is in the path
-    if (!signedUrl.contains("/storage/v1/")) {
-        signedUrl = signedUrl.replace("/object/sign/", "/storage/v1/object/sign/");
-    }
-    return signedUrl;
-}
+            if (signedUrl.startsWith("http")) {
+                // Full URL returned — ensure /storage/v1 is present
+                if (!signedUrl.contains("/storage/v1/")) {
+                    signedUrl = signedUrl.replace("/object/sign/", "/storage/v1/object/sign/");
+                }
+                return signedUrl;
+            }
 
-return supabaseUrl + "/storage/v1" + signedUrl;
+            // Relative URL returned — strip any leading /storage/v1 before appending
+            if (signedUrl.startsWith("/storage/v1")) {
+                signedUrl = signedUrl.substring("/storage/v1".length());
+            }
+            return supabaseUrl + "/storage/v1" + signedUrl;
         } catch (AppException ex) {
             throw ex;
         } catch (Exception ex) {
