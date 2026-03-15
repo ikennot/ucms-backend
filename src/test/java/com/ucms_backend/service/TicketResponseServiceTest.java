@@ -5,6 +5,7 @@ import com.ucms_backend.dto.TicketResponseDto;
 import com.ucms_backend.exception.AppException;
 import com.ucms_backend.model.entity.Ticket;
 import com.ucms_backend.model.entity.TicketResponse;
+import com.ucms_backend.model.enums.TicketStatus;
 import com.ucms_backend.repository.TicketRepository;
 import com.ucms_backend.repository.TicketResponseRepository;
 import java.time.LocalDateTime;
@@ -57,6 +58,7 @@ class TicketResponseServiceTest {
         Ticket ticket = Ticket.builder()
                 .id(ticketId)
                 .userId(UUID.randomUUID())
+                .status(TicketStatus.PENDING)
                 .build();
         TicketResponse saved = TicketResponse.builder()
                 .id(99L)
@@ -88,6 +90,7 @@ class TicketResponseServiceTest {
         Ticket ticket = Ticket.builder()
                 .id(ticketId)
                 .userId(UUID.randomUUID())
+                .status(TicketStatus.PENDING)
                 .build();
         TicketResponse saved = TicketResponse.builder()
                 .id(11L)

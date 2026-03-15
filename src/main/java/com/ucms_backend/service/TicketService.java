@@ -148,6 +148,7 @@ public class TicketService {
         }
 
         ticket.setConfirmedResolved(true);
+        ticket.setStatus(TicketStatus.CLOSED);
         Ticket saved = ticketRepository.save(ticket);
 
         notificationService.createNotification(

@@ -39,6 +39,7 @@ public class TicketResponseService {
                 .ticketId(ticket.getId())
                 .adminId(adminId)
                 .message(request.getMessage())
+                .ticketStatus(ticket.getStatus().name())
                 .build();
 
         TicketResponse saved = ticketResponseRepository.save(response);
