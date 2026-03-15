@@ -137,11 +137,19 @@ public class AttachmentService {
             return "file";
         }
 
+        // Strip path separators
         name = name.replace("\\", "/");
         int lastSlash = name.lastIndexOf('/');
         if (lastSlash >= 0) {
             name = name.substring(lastSlash + 1);
         }
+
+        if (name.isBlank()) {
+            return "file";
+        }
+
+        // Replace URL-unsafe characters (colon, space, hash, etc.) with underscore
+        name = name.replaceAll("[^a-zA-Z0-9._\\-]", "_");
 
         if (name.isBlank()) {
             return "file";

@@ -36,6 +36,9 @@ public class TicketResponse {
     @Column(nullable = false)
     private String message;
 
+    @Column(name = "ticket_status")
+    private String ticketStatus;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

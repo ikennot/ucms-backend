@@ -67,6 +67,7 @@ public class SupabaseStorageService {
 
     public String generateSignedUrl(String storagePath) {
         try {
+            log.info("generateSignedUrl called for path: {}", storagePath);
             Map<String, Object> requestBody = Map.of("expiresIn", signedUrlExpirySeconds);
             String responseBody = restClient.post()
                     .uri("/storage/v1/object/sign/" + bucket + "/" + storagePath)
@@ -96,15 +97,19 @@ public class SupabaseStorageService {
                 throw new AppException(502, STORAGE_ERROR_CODE, STORAGE_ERROR_MESSAGE);
             }
 
-            if (signedUrl.startsWith("http")) {
-                return signedUrl;
-            }
+if (signedUrl.startsWith("http")) {
+    // Ensure /storage/v1 is in the path
+    if (!signedUrl.contains("/storage/v1/")) {
+        signedUrl = signedUrl.replace("/object/sign/", "/storage/v1/object/sign/");
+    }
+    return signedUrl;
+}
 
-            return supabaseUrl + signedUrl;
+return supabaseUrl + "/storage/v1" + signedUrl;
         } catch (AppException ex) {
             throw ex;
         } catch (Exception ex) {
-            log.error("Supabase signed URL generation failed: {}", ex.getMessage(), ex);
+            log.error("Supabase signed URL generation failed for path {}: {}", storagePath, ex.getMessage(), ex);
             throw new AppException(502, STORAGE_ERROR_CODE, STORAGE_ERROR_MESSAGE);
         }
     }
