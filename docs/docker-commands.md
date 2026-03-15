@@ -114,6 +114,63 @@ curl http://localhost:8080/api/health
 
 ---
 
+## Docker Hub — Initial Push
+
+> Gawin ito **isang beses** para ma-upload ang image sa Docker Hub.
+
+```bash
+# 1. Login sa Docker Hub (ilagay ang username at password kapag hiniling)
+docker login
+
+# 2. I-tag ang existing local image para sa Docker Hub
+docker tag ucms-backend:latest kenz2025/ucms-backend:latest
+
+# 3. I-push sa Docker Hub
+docker push kenz2025/ucms-backend:latest
+```
+
+I-verify sa browser:
+```
+https://hub.docker.com/r/kenz2025/ucms-backend
+```
+
+---
+
+## Docker Hub — Pag Mag-update ng Image
+
+### A. Nag-bago ang source code (kailangan i-rebuild)
+
+```bash
+# 1. I-rebuild ang image mula sa source
+docker build -t ucms-backend:latest .
+
+# 2. I-tag muli para sa Docker Hub
+docker tag ucms-backend:latest kenz2025/ucms-backend:latest
+
+# 3. I-push ang updated image
+docker push kenz2025/ucms-backend:latest
+```
+
+---
+
+### B. Gusto ng versioning (e.g. v1.0.0, v1.1.0)
+
+```bash
+# I-tag ng specific version
+docker tag ucms-backend:latest kenz2025/ucms-backend:v1.0.0
+
+# I-push ang specific version
+docker push kenz2025/ucms-backend:v1.0.0
+
+# I-update din ang latest tag
+docker tag ucms-backend:latest kenz2025/ucms-backend:latest
+docker push kenz2025/ucms-backend:latest
+```
+
+> **Tip:** Palaging i-push ang `latest` kasabay ng specific version para ang mga pull na walang version tag ay makuha ang pinakabago.
+
+---
+
 ## Cleanup
 
 ```bash
