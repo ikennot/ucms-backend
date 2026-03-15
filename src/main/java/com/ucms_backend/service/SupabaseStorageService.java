@@ -30,7 +30,7 @@ public class SupabaseStorageService {
     public SupabaseStorageService(
             @Value("${supabase.url}") String supabaseUrl,
             @Value("${supabase.service-role-key}") String serviceRoleKey,
-            @Value("${supabase.storage.bucket}") String bucket,
+            @Value("${supabase.storage.bucket:ticket-attachments}") String bucket,
             @Value("${supabase.storage.signed-url-expiry:3600}") int signedUrlExpirySeconds
     ) {
         this.restClient = RestClient.builder()

@@ -4,10 +4,10 @@ Deploy the UCMS backend to Railway or Render (free tier). Configure all required
 ## Tasks
 - [x] Add GET /api/health endpoint — returns 200 { status: UP, timestamp } — no auth required; used by platform health checks
 - [x] Create application-prod.yaml profile — production-safe config (no debug logging, ddl-auto=none, connection pool tuned)
-- [ ] Document all required environment variables in README.md under a Deployment section: SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME, SPRING_DATASOURCE_PASSWORD, SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWKS_URI, SUPABASE_JWT_ISSUER, SUPABASE_STORAGE_SIGNED_URL_EXPIRY_SECONDS
-- [ ] Add Dockerfile (or verify Railway/Render native Java 21 buildpack works)
-- [ ] Configure platform health check path to /api/health
-- [ ] Set SPRING_PROFILES_ACTIVE=prod in platform environment
+- [x] Document all required environment variables in README.md under a Deployment section: SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME, SPRING_DATASOURCE_PASSWORD, SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWKS_URI, SUPABASE_JWT_ISSUER, SUPABASE_STORAGE_SIGNED_URL_EXPIRY_SECONDS
+- [x] Add Dockerfile (or verify Railway/Render native Java 21 buildpack works)
+- [x] Configure platform health check path to /api/health
+- [x] Set SPRING_PROFILES_ACTIVE=prod in platform environment
 - [ ] Verify Flyway migrations run automatically on startup in production
 - [ ] Smoke test all critical endpoints after deployment (auth, ticket create, ticket list)
 - [ ] Update README.md with deployment steps and live base URL

@@ -1,0 +1,17 @@
+.git
+.gitignore
+.github
+
+target
+docs
+scripts
+
+*.md
+
+.settings
+.classpath
+.factorypath
+.project
+
+src/main/resources/application.yaml
+src/main/resources/application.yaml.example
