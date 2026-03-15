@@ -504,7 +504,70 @@
                   }
                 ],
                 "cookie": [],
-                "body": "{\n  \"message\": \"Email updated. Verification required.\",\n  \"data\": {\n    \"email\": \"student@example.edu\",\n    \"emailVerified\": false\n  }\n}"
+                "body": "{\n  \"message\": \"Email update initiated\",\n  \"data\": {\n    \"email\": \"student@example.edu\",\n    \"emailVerified\": false\n  }\n}"
+              }
+            ]
+          },
+          {
+            "name": "Confirm Email Verified",
+            "request": {
+              "method": "PATCH",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/users/me/email/verify",
+                "host": [
+                  "{{base_url}}"
+                ],
+                "path": [
+                  "api",
+                  "users",
+                  "me",
+                  "email",
+                  "verify"
+                ]
+              }
+            },
+            "response": [
+              {
+                "name": "Example 200 Response",
+                "originalRequest": {
+                  "method": "PATCH",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "url": {
+                    "raw": "{{base_url}}/api/users/me/email/verify",
+                    "host": [
+                      "{{base_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "users",
+                      "me",
+                      "email",
+                      "verify"
+                    ]
+                  }
+                },
+                "status": "OK",
+                "code": 200,
+                "_postman_previewlanguage": "json",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "cookie": [],
+                "body": "{\n  \"message\": \"Email marked as verified\",\n  \"data\": {\n    \"id\": 101,\n    \"email\": \"student@example.edu\",\n    \"emailVerified\": true\n  }\n}"
               }
             ]
           }
@@ -746,12 +809,7 @@
             "name": "Delete Category (Admin)",
             "request": {
               "method": "DELETE",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
+              "header": [],
               "url": {
                 "raw": "{{base_url}}/api/categories/{{category_id}}",
                 "host": [
@@ -776,15 +834,10 @@
             },
             "response": [
               {
-                "name": "Example 200 Response",
+                "name": "Example 204 Response",
                 "originalRequest": {
                   "method": "DELETE",
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
+                  "header": [],
                   "url": {
                     "raw": "{{base_url}}/api/categories/{{category_id}}",
                     "host": [
@@ -807,17 +860,12 @@
                     ]
                   }
                 },
-                "status": "OK",
-                "code": 200,
-                "_postman_previewlanguage": "json",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
+                "status": "No Content",
+                "code": 204,
+                "_postman_previewlanguage": "text",
+                "header": [],
                 "cookie": [],
-                "body": "{\n  \"message\": \"Category deleted\",\n  \"data\": {\n    \"id\": 1\n  }\n}"
+                "body": ""
               }
             ]
           }
