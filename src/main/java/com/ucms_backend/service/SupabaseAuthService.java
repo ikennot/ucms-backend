@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ucms_backend.dto.AuthResponse;
 import com.ucms_backend.exception.AppException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 @Service
 public class SupabaseAuthService {
@@ -27,12 +29,14 @@ public class SupabaseAuthService {
     private final String anonKey;
     // Security note: this secret is used only for outbound headers and is never logged.
     private final String serviceRoleKey;
+    private final String passwordResetRedirectUrl;
     private final EmailService emailService;
 
     public SupabaseAuthService(
             @Value("${supabase.url}") String supabaseUrl,
             @Value("${supabase.anon-key}") String anonKey,
             @Value("${supabase.service-role-key}") String serviceRoleKey,
+            @Value("${app.mobile.password-reset-redirect:ucms://reset-password}") String passwordResetRedirectUrl,
             EmailService emailService
     ) {
         this.restClient = RestClient.builder()
@@ -40,6 +44,7 @@ public class SupabaseAuthService {
                 .build();
         this.anonKey = anonKey;
         this.serviceRoleKey = serviceRoleKey;
+        this.passwordResetRedirectUrl = passwordResetRedirectUrl;
         this.emailService = emailService;
     }
 
@@ -108,15 +113,28 @@ public class SupabaseAuthService {
                 .build();
     }
 
-    public void sendPasswordResetEmail(String email) {
-        Map<String, Object> requestBody = Map.of("email", email);
+    public void sendPasswordResetEmail(String studentId, String email) {
+        Map<String, Object> requestBody = Map.of(
+                "type", "recovery",
+                "email", toUcsmLocalEmail(studentId),
+                "redirect_to", passwordResetRedirectUrl
+        );
 
-        executeNoBody(
+        Map<String, Object> response = executeForMap(
                 restClient.post()
-                        .uri("/auth/v1/recover")
-                        .header("apikey", anonKey)
+                        .uri("/auth/v1/admin/generate_link")
+                        .header("apikey", serviceRoleKey)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + serviceRoleKey)
                         .body(requestBody)
         );
+
+        Object actionLink = response.get("action_link");
+        if (!(actionLink instanceof String actionLinkString)) {
+            log.error("Supabase generate_link recovery did not return action_link: {}", response);
+            throw supabaseError();
+        }
+
+        emailService.sendPasswordResetEmail(email, actionLinkString);
     }
 
     public void sendVerificationEmail(UUID authUserId, String email) {
@@ -146,6 +164,59 @@ public class SupabaseAuthService {
         emailService.sendVerificationEmail(email, actionLinkString);
     }
 
+    public boolean isPasswordValid(String studentId, String password) {
+        Map<String, Object> requestBody = Map.of(
+                "email", toUcsmLocalEmail(studentId),
+                "password", password
+        );
+
+        try {
+            restClient.post()
+                    .uri(uriBuilder -> uriBuilder.path("/auth/v1/token").queryParam("grant_type", "password").build())
+                    .header("apikey", anonKey)
+                    .body(requestBody)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (request, response) -> {
+                        int statusCode = response.getStatusCode().value();
+                        if (statusCode == 400 || statusCode == 401) {
+                            throw new AppException(403, "CURRENT_PASSWORD_INCORRECT", "Current password is incorrect");
+                        }
+                        String errorBody = new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8);
+                        log.error("Supabase error {}: {}", response.getStatusCode(), errorBody);
+                        throw new AppException(502, SUPABASE_ERROR_CODE, SUPABASE_ERROR_MESSAGE);
+                    })
+                    .toBodilessEntity();
+            return true;
+        } catch (AppException ex) {
+            if ("CURRENT_PASSWORD_INCORRECT".equals(ex.getErrorCode())) {
+                return false;
+            }
+            throw ex;
+        } catch (RestClientResponseException ex) {
+            int statusCode = ex.getStatusCode().value();
+            if (statusCode == 400 || statusCode == 401) {
+                return false;
+            }
+            log.error("Supabase call failed with status {}: {}", statusCode, ex.getResponseBodyAsString(), ex);
+            throw new AppException(502, SUPABASE_ERROR_CODE, SUPABASE_ERROR_MESSAGE);
+        } catch (RestClientException ex) {
+            log.error("Supabase call failed: {}", ex.getMessage(), ex);
+            throw new AppException(502, SUPABASE_ERROR_CODE, SUPABASE_ERROR_MESSAGE);
+        }
+    }
+
+    public void updateUserPassword(UUID authUserId, String newPassword) {
+        Map<String, Object> requestBody = Map.of("password", newPassword);
+
+        executeNoBody(
+                restClient.put()
+                        .uri("/auth/v1/admin/users/" + authUserId)
+                        .header("apikey", serviceRoleKey)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + serviceRoleKey)
+                        .body(requestBody)
+        );
+    }
+
     /**
      * Deletes a Supabase Auth user by UUID via Admin API.
      * Used as a compensating transaction if local profile save fails after user creation.
@@ -160,7 +231,7 @@ public class SupabaseAuthService {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + serviceRoleKey)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (request, response) -> {
-                        String errorBody = new String(response.getBody().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                        String errorBody = new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8);
                         log.error("Failed to delete Supabase user {}: {}", authUserId, errorBody);
                     })
                     .toBodilessEntity();
@@ -173,7 +244,7 @@ public class SupabaseAuthService {
         try {
             String responseBody = requestSpec.retrieve()
                     .onStatus(HttpStatusCode::isError, (request, response) -> {
-                        String errorBody = new String(response.getBody().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                        String errorBody = new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8);
                         log.error("Supabase error {}: {}", response.getStatusCode(), errorBody);
                         throw new AppException(502, SUPABASE_ERROR_CODE, SUPABASE_ERROR_MESSAGE);
                     })
@@ -198,7 +269,7 @@ public class SupabaseAuthService {
         try {
             requestSpec.retrieve()
                     .onStatus(HttpStatusCode::isError, (request, response) -> {
-                        String errorBody = new String(response.getBody().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                        String errorBody = new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8);
                         log.error("Supabase error {}: {}", response.getStatusCode(), errorBody);
                         throw new AppException(502, SUPABASE_ERROR_CODE, SUPABASE_ERROR_MESSAGE);
                     })

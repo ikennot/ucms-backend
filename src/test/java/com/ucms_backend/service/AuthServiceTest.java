@@ -1,6 +1,7 @@
 package com.ucms_backend.service;
 
 import com.ucms_backend.dto.AuthResponse;
+import com.ucms_backend.dto.ChangePasswordRequest;
 import com.ucms_backend.dto.ForgotPasswordRequest;
 import com.ucms_backend.dto.LoginRequest;
 import com.ucms_backend.dto.RegisterRequest;
@@ -131,7 +132,7 @@ class AuthServiceTest {
 
         authService.forgotPassword(request);
 
-        verify(supabaseAuthService, never()).sendPasswordResetEmail(anyString());
+        verify(supabaseAuthService, never()).sendPasswordResetEmail(anyString(), anyString());
     }
 
     @Test
@@ -150,7 +151,7 @@ class AuthServiceTest {
 
         authService.forgotPassword(request);
 
-        verify(supabaseAuthService, never()).sendPasswordResetEmail(anyString());
+        verify(supabaseAuthService, never()).sendPasswordResetEmail(anyString(), anyString());
     }
 
     @Test
@@ -169,7 +170,7 @@ class AuthServiceTest {
 
         authService.forgotPassword(request);
 
-        verify(supabaseAuthService, never()).sendPasswordResetEmail(anyString());
+        verify(supabaseAuthService, never()).sendPasswordResetEmail(anyString(), anyString());
     }
 
     @Test
@@ -188,7 +189,84 @@ class AuthServiceTest {
 
         authService.forgotPassword(request);
 
-        verify(supabaseAuthService).sendPasswordResetEmail(eq("jane.student@ucms.local"));
+        verify(supabaseAuthService).sendPasswordResetEmail(eq("20242025-A"), eq("jane.student@ucms.local"));
+    }
+
+    @Test
+    void changePassword_success() {
+        UUID userId = UUID.randomUUID();
+        ChangePasswordRequest request = new ChangePasswordRequest("oldPassword123", "newPassword123");
+        Profile profile = Profile.builder()
+                .authUserId(userId)
+                .studentId("20242025-A")
+                .name("Jane Student")
+                .role("STUDENT")
+                .emailVerified(true)
+                .build();
+
+        when(profileRepository.findById(userId)).thenReturn(Optional.of(profile));
+        when(supabaseAuthService.isPasswordValid("20242025-A", "oldPassword123")).thenReturn(true);
+
+        authService.changePassword(userId, request);
+
+        verify(supabaseAuthService).updateUserPassword(userId, "newPassword123");
+    }
+
+    @Test
+    void changePassword_profileNotFound() {
+        UUID userId = UUID.randomUUID();
+        ChangePasswordRequest request = new ChangePasswordRequest("oldPassword123", "newPassword123");
+
+        when(profileRepository.findById(userId)).thenReturn(Optional.empty());
+
+        AppException exception = assertThrows(AppException.class, () -> authService.changePassword(userId, request));
+
+        assertEquals(404, exception.getStatus());
+        assertEquals("PROFILE_NOT_FOUND", exception.getErrorCode());
+    }
+
+    @Test
+    void changePassword_samePassword() {
+        UUID userId = UUID.randomUUID();
+        ChangePasswordRequest request = new ChangePasswordRequest("samePassword123", "samePassword123");
+
+        AppException exception = assertThrows(AppException.class, () -> authService.changePassword(userId, request));
+
+        assertEquals(400, exception.getStatus());
+        assertEquals("SAME_PASSWORD", exception.getErrorCode());
+    }
+
+    @Test
+    void changePassword_weakPassword() {
+        UUID userId = UUID.randomUUID();
+        ChangePasswordRequest request = new ChangePasswordRequest("oldPassword123", "short");
+
+        AppException exception = assertThrows(AppException.class, () -> authService.changePassword(userId, request));
+
+        assertEquals(400, exception.getStatus());
+        assertEquals("WEAK_PASSWORD", exception.getErrorCode());
+    }
+
+    @Test
+    void changePassword_incorrectCurrentPassword() {
+        UUID userId = UUID.randomUUID();
+        ChangePasswordRequest request = new ChangePasswordRequest("wrongPassword", "newPassword123");
+        Profile profile = Profile.builder()
+                .authUserId(userId)
+                .studentId("20242025-A")
+                .name("Jane Student")
+                .role("STUDENT")
+                .emailVerified(true)
+                .build();
+
+        when(profileRepository.findById(userId)).thenReturn(Optional.of(profile));
+        when(supabaseAuthService.isPasswordValid("20242025-A", "wrongPassword")).thenReturn(false);
+
+        AppException exception = assertThrows(AppException.class, () -> authService.changePassword(userId, request));
+
+        assertEquals(403, exception.getStatus());
+        assertEquals("CURRENT_PASSWORD_INCORRECT", exception.getErrorCode());
+        verify(supabaseAuthService, never()).updateUserPassword(org.mockito.ArgumentMatchers.any(), anyString());
     }
 
     private RegisterRequest buildRegisterRequest(String studentId) {
