@@ -57,6 +57,11 @@ public class TicketService {
         return TicketResponse.from(ticket, resolveCategoryName(ticket.getCategoryId()));
     }
 
+    private TicketResponse toDetailedResponse(Ticket ticket) {
+        Profile studentProfile = profileRepository.findById(ticket.getUserId()).orElse(null);
+        return TicketResponse.from(ticket, resolveCategoryName(ticket.getCategoryId()), studentProfile);
+    }
+
     public TicketResponse createTicket(CreateTicketRequest request) {
         UUID userId = SecurityUtils.getCurrentUserId();
         Profile profile = profileRepository.findById(userId)
@@ -125,7 +130,7 @@ public class TicketService {
             throw new AppException(403, "FORBIDDEN", "Access denied");
         }
 
-        return toResponse(ticket);
+        return toDetailedResponse(ticket);
     }
 
     public TicketResponse confirmResolved(Long ticketId) {
