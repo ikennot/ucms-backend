@@ -23,6 +23,7 @@ public class TicketResponse {
     private boolean confirmedResolved;
     private Long categoryId;
     private String categoryName;
+    private boolean hasAdminResponse;
     private String studentName;
     private String studentId;
     private String studentCourse;
@@ -30,10 +31,14 @@ public class TicketResponse {
     private LocalDateTime updatedAt;
 
     public static TicketResponse from(Ticket ticket, String categoryName) {
-        return from(ticket, categoryName, null);
+        return from(ticket, categoryName, null, false);
     }
 
     public static TicketResponse from(Ticket ticket, String categoryName, Profile profile) {
+        return from(ticket, categoryName, profile, false);
+    }
+
+    public static TicketResponse from(Ticket ticket, String categoryName, Profile profile, boolean hasAdminResponse) {
         return TicketResponse.builder()
                 .id(ticket.getId())
                 .ticketNumber(ticket.getTicketNumber())
@@ -43,6 +48,7 @@ public class TicketResponse {
                 .confirmedResolved(ticket.isConfirmedResolved())
                 .categoryId(ticket.getCategoryId())
                 .categoryName(categoryName)
+                .hasAdminResponse(hasAdminResponse)
                 .studentName(profile != null ? profile.getName() : null)
                 .studentId(profile != null ? profile.getStudentId() : null)
                 .studentCourse(profile != null ? profile.getCourse() : null)

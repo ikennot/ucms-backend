@@ -10,6 +10,7 @@ import com.ucms_backend.model.enums.TicketStatus;
 import com.ucms_backend.repository.CategoryRepository;
 import com.ucms_backend.repository.ProfileRepository;
 import com.ucms_backend.repository.TicketRepository;
+import com.ucms_backend.repository.TicketResponseRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,6 +44,9 @@ class TicketServiceTest {
 
     @Mock
     private ProfileRepository profileRepository;
+
+    @Mock
+    private TicketResponseRepository ticketResponseRepository;
 
     @Mock
     private TicketNumberGenerator ticketNumberGenerator;
