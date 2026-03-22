@@ -45,8 +45,8 @@ public class AnalyticsService {
 
         return ticketRepository.countGroupedByCategory().stream()
             .map(row -> {
-                Long categoryId = (Long) row[0];
-                long count = (Long) row[1];
+                Long categoryId = ((Number) row[0]).longValue();
+                long count = ((Number) row[1]).longValue();
                 String categoryName = categoryNames.getOrDefault(categoryId, "Unknown");
                 return CategoryCountResponse.builder()
                     .categoryId(categoryId)
