@@ -11,9 +11,12 @@ import com.ucms_backend.model.enums.TicketStatus;
 import com.ucms_backend.repository.CategoryRepository;
 import com.ucms_backend.repository.ProfileRepository;
 import com.ucms_backend.repository.TicketRepository;
+import com.ucms_backend.repository.TicketResponseRepository;
 import com.ucms_backend.security.SecurityUtils;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -30,6 +33,7 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final CategoryRepository categoryRepository;
     private final ProfileRepository profileRepository;
+    private final TicketResponseRepository ticketResponseRepository;
     private final TicketNumberGenerator ticketNumberGenerator;
     private final NotificationService notificationService;
 
@@ -37,12 +41,14 @@ public class TicketService {
             TicketRepository ticketRepository,
             CategoryRepository categoryRepository,
             ProfileRepository profileRepository,
+            TicketResponseRepository ticketResponseRepository,
             TicketNumberGenerator ticketNumberGenerator,
             NotificationService notificationService
     ) {
         this.ticketRepository = ticketRepository;
         this.categoryRepository = categoryRepository;
         this.profileRepository = profileRepository;
+        this.ticketResponseRepository = ticketResponseRepository;
         this.ticketNumberGenerator = ticketNumberGenerator;
         this.notificationService = notificationService;
     }
@@ -54,12 +60,35 @@ public class TicketService {
     }
 
     private TicketResponse toResponse(Ticket ticket) {
-        return TicketResponse.from(ticket, resolveCategoryName(ticket.getCategoryId()));
+        boolean hasAdminResponse = ticketResponseRepository.existsByTicketId(ticket.getId());
+        return TicketResponse.from(ticket, resolveCategoryName(ticket.getCategoryId()), null, hasAdminResponse);
+    }
+
+    private TicketResponse toResponse(Ticket ticket, Set<Long> ticketIdsWithResponses) {
+        boolean hasAdminResponse = ticketIdsWithResponses.contains(ticket.getId());
+        return TicketResponse.from(ticket, resolveCategoryName(ticket.getCategoryId()), null, hasAdminResponse);
     }
 
     private TicketResponse toDetailedResponse(Ticket ticket) {
         Profile studentProfile = profileRepository.findById(ticket.getUserId()).orElse(null);
-        return TicketResponse.from(ticket, resolveCategoryName(ticket.getCategoryId()), studentProfile);
+        boolean hasAdminResponse = ticketResponseRepository.existsByTicketId(ticket.getId());
+        return TicketResponse.from(ticket, resolveCategoryName(ticket.getCategoryId()), studentProfile, hasAdminResponse);
+    }
+
+    private Set<Long> findTicketIdsWithResponses(List<Ticket> tickets) {
+        List<Long> ticketIds = tickets.stream()
+                .map(Ticket::getId)
+                .toList();
+
+        if (ticketIds.isEmpty()) {
+            return Set.of();
+        }
+
+        List<Long> foundIds = ticketResponseRepository.findDistinctTicketIdsByTicketIdIn(ticketIds);
+        if (foundIds == null || foundIds.isEmpty()) {
+            return Set.of();
+        }
+        return new HashSet<>(foundIds);
     }
 
     public TicketResponse createTicket(CreateTicketRequest request) {
@@ -94,8 +123,10 @@ public class TicketService {
         String role = SecurityUtils.getCurrentRole();
 
         if ("STUDENT".equals(role)) {
-            return ticketRepository.findByUserId(userId).stream()
-                    .map(this::toResponse)
+            List<Ticket> tickets = ticketRepository.findByUserId(userId);
+            Set<Long> ticketIdsWithResponses = findTicketIdsWithResponses(tickets);
+            return tickets.stream()
+                    .map(ticket -> toResponse(ticket, ticketIdsWithResponses))
                     .toList();
         }
 
@@ -111,8 +142,10 @@ public class TicketService {
                 spec = spec.and((root, query, cb) -> cb.equal(root.get("categoryId"), categoryId));
             }
 
-            return ticketRepository.findAll(spec).stream()
-                    .map(this::toResponse)
+            List<Ticket> tickets = ticketRepository.findAll(spec);
+            Set<Long> ticketIdsWithResponses = findTicketIdsWithResponses(tickets);
+            return tickets.stream()
+                    .map(ticket -> toResponse(ticket, ticketIdsWithResponses))
                     .toList();
         }
 
