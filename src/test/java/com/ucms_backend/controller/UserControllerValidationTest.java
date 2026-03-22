@@ -1,6 +1,7 @@
 package com.ucms_backend.controller;
 
 import com.ucms_backend.exception.GlobalExceptionHandler;
+import com.ucms_backend.service.AuthService;
 import com.ucms_backend.service.ProfileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,9 @@ class UserControllerValidationTest {
     @Mock
     private ProfileService profileService;
 
+    @Mock
+    private AuthService authService;
+
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -31,7 +35,7 @@ class UserControllerValidationTest {
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
 
-        UserController userController = new UserController(profileService);
+        UserController userController = new UserController(profileService, authService);
         mockMvc = MockMvcBuilders.standaloneSetup(userController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setValidator(validator)
@@ -56,7 +60,7 @@ class UserControllerValidationTest {
                 .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.data").value(nullValue()));
 
-        verifyNoInteractions(profileService);
+        verifyNoInteractions(profileService, authService);
     }
 
     @Test
@@ -75,6 +79,6 @@ class UserControllerValidationTest {
                 .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.data").value(nullValue()));
 
-        verifyNoInteractions(profileService);
+        verifyNoInteractions(profileService, authService);
     }
 }
