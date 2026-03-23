@@ -53,11 +53,38 @@ public class Ticket {
     @Column(name = "confirmed_resolved", nullable = false)
     private boolean confirmedResolved;
 
+    @Column(name = "is_archived", nullable = false)
+    private boolean archived;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @Column(name = "urgency_score")
+    private Integer urgencyScore;
+
+    @Column(name = "urgency_label", length = 20)
+    private String urgencyLabel;
+
+    @Column(name = "urgency_reason", length = 500)
+    private String urgencyReason;
+
+    @Column(name = "urgency_signals", length = 1000)
+    private String urgencySignals;
+
+    @Column(name = "urgency_confidence")
+    private Double urgencyConfidence;
+
+    @Column(name = "urgency_updated_at")
+    private LocalDateTime urgencyUpdatedAt;
+
+    @Column(name = "is_overridden", nullable = false)
+    private boolean urgencyOverridden;
+
+    @Column(name = "urgency_override_reason", length = 500)
+    private String urgencyOverrideReason;
 
     @PrePersist
     void onPrePersist() {
@@ -69,6 +96,7 @@ public class Ticket {
         if (status == null) {
             status = TicketStatus.PENDING;
         }
+        archived = archived || status == TicketStatus.CLOSED;
     }
 
     @PreUpdate

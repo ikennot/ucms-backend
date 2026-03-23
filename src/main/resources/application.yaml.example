@@ -43,3 +43,23 @@ supabase:
     bucket: ticket-attachments
     # Signed URL expiry in seconds (short-lived)
     signed-url-expiry: 3600
+
+gemini:
+  # Google AI Studio API key for urgency scoring (backend only)
+  api-key: ${GEMINI_API_KEY:}
+  # Model for urgency scoring; keep configurable for rollout changes
+  model: ${GEMINI_MODEL:gemini-2.5-flash}
+  # Timeout in milliseconds before fallback rule engine is used
+  timeout-ms: ${GEMINI_TIMEOUT_MS:4000}
+
+urgency-rescore:
+  # Enable periodic background urgency refresh for open tickets
+  enabled: true
+  # How often the scheduler runs (30 minutes)
+  fixed-delay-ms: 1800000
+  # Delay first run after app startup (2 minutes)
+  initial-delay-ms: 120000
+  # Max tickets processed per run
+  batch-size: 50
+  # Minimum age of existing urgency score before recalculating
+  min-refresh-minutes: 30

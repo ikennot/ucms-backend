@@ -1,0 +1,2 @@
+ALTER TABLE ticket
+    ADD COLUMN IF NOT EXISTS urgency_signals VARCHAR(1000);

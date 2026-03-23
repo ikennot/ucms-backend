@@ -2,6 +2,7 @@ package com.ucms_backend.service;
 
 import com.ucms_backend.dto.CreateTicketRequest;
 import com.ucms_backend.dto.TicketResponse;
+import com.ucms_backend.dto.UrgencyOverrideRequest;
 import com.ucms_backend.dto.UpdateStatusRequest;
 import com.ucms_backend.exception.AppException;
 import com.ucms_backend.model.entity.Category;
@@ -13,8 +14,11 @@ import com.ucms_backend.repository.ProfileRepository;
 import com.ucms_backend.repository.TicketRepository;
 import com.ucms_backend.repository.TicketResponseRepository;
 import com.ucms_backend.security.SecurityUtils;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -36,6 +40,7 @@ public class TicketService {
     private final TicketResponseRepository ticketResponseRepository;
     private final TicketNumberGenerator ticketNumberGenerator;
     private final NotificationService notificationService;
+    private final TicketUrgencyScoringService ticketUrgencyScoringService;
 
     public TicketService(
             TicketRepository ticketRepository,
@@ -43,7 +48,8 @@ public class TicketService {
             ProfileRepository profileRepository,
             TicketResponseRepository ticketResponseRepository,
             TicketNumberGenerator ticketNumberGenerator,
-            NotificationService notificationService
+            NotificationService notificationService,
+            TicketUrgencyScoringService ticketUrgencyScoringService
     ) {
         this.ticketRepository = ticketRepository;
         this.categoryRepository = categoryRepository;
@@ -51,6 +57,7 @@ public class TicketService {
         this.ticketResponseRepository = ticketResponseRepository;
         this.ticketNumberGenerator = ticketNumberGenerator;
         this.notificationService = notificationService;
+        this.ticketUrgencyScoringService = ticketUrgencyScoringService;
     }
 
     private String resolveCategoryName(Long categoryId) {
@@ -73,6 +80,67 @@ public class TicketService {
         Profile studentProfile = profileRepository.findById(ticket.getUserId()).orElse(null);
         boolean hasAdminResponse = ticketResponseRepository.existsByTicketId(ticket.getId());
         return TicketResponse.from(ticket, resolveCategoryName(ticket.getCategoryId()), studentProfile, hasAdminResponse);
+    }
+
+    private void applyUrgency(Ticket ticket) {
+        if (ticket.isUrgencyOverridden()) {
+            return;
+        }
+        TicketUrgencyEvaluation evaluation = ticketUrgencyScoringService.evaluate(ticket, resolveCategoryName(ticket.getCategoryId()));
+        ticket.setUrgencyScore(evaluation.score());
+        ticket.setUrgencyLabel(evaluation.priorityLevel());
+        ticket.setUrgencyReason(evaluation.reason());
+        ticket.setUrgencySignals(evaluation.signals());
+        ticket.setUrgencyConfidence(evaluation.confidence());
+        ticket.setUrgencyUpdatedAt(evaluation.updatedAt() != null ? evaluation.updatedAt() : LocalDateTime.now(ZoneOffset.UTC));
+    }
+
+    public TicketResponse overrideUrgency(Long ticketId, UrgencyOverrideRequest request) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new AppException(404, "TICKET_NOT_FOUND", "Ticket not found"));
+
+        String normalizedPriority = normalizeOverridePriority(request.getPriorityLevel());
+        int score = scoreForPriority(normalizedPriority);
+        String reason = request.getReason() != null ? request.getReason().trim() : "";
+        if (reason.length() > 500) {
+            reason = reason.substring(0, 500);
+        }
+        if (reason.isEmpty()) {
+            reason = "Urgency manually overridden by admin";
+        }
+
+        ticket.setUrgencyOverridden(true);
+        ticket.setUrgencyOverrideReason(reason);
+        ticket.setUrgencyLabel(normalizedPriority);
+        ticket.setUrgencyScore(score);
+        ticket.setUrgencyReason("Manual admin override applied");
+        ticket.setUrgencySignals("Manual override");
+        ticket.setUrgencyConfidence(1.0);
+        ticket.setUrgencyUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
+
+        Ticket saved = ticketRepository.save(ticket);
+        return toDetailedResponse(saved);
+    }
+
+    private String normalizeOverridePriority(String value) {
+        if (value == null) {
+            throw new AppException(400, "INVALID_PRIORITY_LEVEL", "priorityLevel is required");
+        }
+
+        String normalized = value.trim().toUpperCase(Locale.ROOT);
+        if (Set.of("CRITICAL", "HIGH", "LOW", "MUTED").contains(normalized)) {
+            return normalized;
+        }
+        throw new AppException(400, "INVALID_PRIORITY_LEVEL", "Allowed values: MUTED, LOW, HIGH, CRITICAL");
+    }
+
+    private int scoreForPriority(String priorityLevel) {
+        return switch (priorityLevel) {
+            case "CRITICAL" -> 90;
+            case "HIGH" -> 70;
+            case "LOW" -> 40;
+            default -> 10;
+        };
     }
 
     private Set<Long> findTicketIdsWithResponses(List<Ticket> tickets) {
@@ -114,16 +182,19 @@ public class TicketService {
                 .description(request.getDescription())
                 .build();
 
+        applyUrgency(ticket);
         Ticket saved = ticketRepository.save(ticket);
         return toResponse(saved);
     }
 
-    public List<TicketResponse> getTickets(String status, Long categoryId) {
+    public List<TicketResponse> getTickets(String status, Long categoryId, boolean includeArchived) {
         UUID userId = SecurityUtils.getCurrentUserId();
         String role = SecurityUtils.getCurrentRole();
 
         if ("STUDENT".equals(role)) {
-            List<Ticket> tickets = ticketRepository.findByUserId(userId);
+            List<Ticket> tickets = includeArchived
+                    ? ticketRepository.findByUserId(userId)
+                    : ticketRepository.findByUserIdAndArchivedFalse(userId);
             Set<Long> ticketIdsWithResponses = findTicketIdsWithResponses(tickets);
             return tickets.stream()
                     .map(ticket -> toResponse(ticket, ticketIdsWithResponses))
@@ -140,6 +211,10 @@ public class TicketService {
 
             if (categoryId != null) {
                 spec = spec.and((root, query, cb) -> cb.equal(root.get("categoryId"), categoryId));
+            }
+
+            if (!includeArchived) {
+                spec = spec.and((root, query, cb) -> cb.isFalse(root.get("archived")));
             }
 
             List<Ticket> tickets = ticketRepository.findAll(spec);
@@ -187,6 +262,8 @@ public class TicketService {
 
         ticket.setConfirmedResolved(true);
         ticket.setStatus(TicketStatus.CLOSED);
+        ticket.setArchived(true);
+        applyUrgency(ticket);
         Ticket saved = ticketRepository.save(ticket);
 
         notificationService.createNotification(
@@ -226,6 +303,10 @@ public class TicketService {
         }
 
         ticket.setStatus(next);
+        if (next == TicketStatus.CLOSED) {
+            ticket.setArchived(true);
+        }
+        applyUrgency(ticket);
         Ticket saved = ticketRepository.save(ticket);
 
         notificationService.createNotification(

@@ -1,0 +1,6 @@
+ALTER TABLE ticket
+    ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE;
+
+UPDATE ticket
+SET is_archived = TRUE
+WHERE status = 'CLOSED';
