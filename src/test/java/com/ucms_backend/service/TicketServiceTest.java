@@ -2,6 +2,7 @@ package com.ucms_backend.service;
 
 import com.ucms_backend.dto.CreateTicketRequest;
 import com.ucms_backend.dto.TicketResponse;
+import com.ucms_backend.dto.UrgencyOverrideRequest;
 import com.ucms_backend.dto.UpdateStatusRequest;
 import com.ucms_backend.exception.AppException;
 import com.ucms_backend.model.entity.Profile;
@@ -12,9 +13,12 @@ import com.ucms_backend.repository.ProfileRepository;
 import com.ucms_backend.repository.TicketRepository;
 import com.ucms_backend.repository.TicketResponseRepository;
 import java.util.List;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -54,8 +59,27 @@ class TicketServiceTest {
     @Mock
     private NotificationService notificationService;
 
+    @Mock
+    private TicketUrgencyScoringService ticketUrgencyScoringService;
+
     @InjectMocks
     private TicketService ticketService;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(ticketUrgencyScoringService.evaluate(any(Ticket.class), any())).thenReturn(
+                new TicketUrgencyEvaluation(
+                        false,
+                        40,
+                        "MEDIUM",
+                        0.58,
+                        "Fallback urgency scoring applied",
+                        "Rule-based fallback",
+                        LocalDateTime.now(ZoneOffset.UTC),
+                        false
+                )
+        );
+    }
 
     @AfterEach
     void clearSecurityContext() {
@@ -147,6 +171,29 @@ class TicketServiceTest {
         assertEquals("TKT-20260228-0001", response.getTicketNumber());
         assertEquals("PENDING", response.getStatus());
         verify(ticketRepository).save(any(Ticket.class));
+    }
+
+    @Test
+    void overrideUrgency_adminOverride_setsOverrideFlagsAndPriority() {
+        Ticket ticket = Ticket.builder()
+                .id(30L)
+                .userId(UUID.randomUUID())
+                .categoryId(1L)
+                .ticketNumber("TKT-20260323-0030")
+                .title("General concern")
+                .description("Needs triage")
+                .status(TicketStatus.PENDING)
+                .build();
+        UrgencyOverrideRequest request = new UrgencyOverrideRequest("HIGH", "Handled as high by admin");
+
+        when(ticketRepository.findById(30L)).thenReturn(Optional.of(ticket));
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        TicketResponse response = ticketService.overrideUrgency(30L, request);
+
+        assertEquals("HIGH", response.getUrgencyLabel());
+        assertTrue(response.isUrgencyOverridden());
+        assertEquals("Handled as high by admin", response.getUrgencyOverrideReason());
     }
 
     @Test

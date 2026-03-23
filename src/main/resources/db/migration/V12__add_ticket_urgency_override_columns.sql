@@ -1,0 +1,3 @@
+ALTER TABLE ticket
+    ADD COLUMN IF NOT EXISTS is_overridden BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS urgency_override_reason VARCHAR(500);
