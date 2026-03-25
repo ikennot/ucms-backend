@@ -21,6 +21,20 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
 
     long countByStatusIn(List<TicketStatus> statuses);
 
+    long countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime startInclusive, LocalDateTime endExclusive);
+
+    long countByStatusInAndUpdatedAtGreaterThanEqualAndUpdatedAtLessThan(
+        List<TicketStatus> statuses,
+        LocalDateTime startInclusive,
+        LocalDateTime endExclusive
+    );
+
+    List<Ticket> findByStatusInAndUpdatedAtGreaterThanEqualAndUpdatedAtLessThan(
+        List<TicketStatus> statuses,
+        LocalDateTime startInclusive,
+        LocalDateTime endExclusive
+    );
+
     @Query("SELECT t.categoryId, COUNT(t) FROM Ticket t GROUP BY t.categoryId")
     List<Object[]> countGroupedByCategory();
 

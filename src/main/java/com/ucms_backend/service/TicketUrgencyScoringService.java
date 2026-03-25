@@ -141,8 +141,8 @@ public class TicketUrgencyScoringService {
                         keywordEvaluation.score(),
                         keywordEvaluation.priorityLevel(),
                         0.55,
-                        "Potentially critical content detected with unsupported language; requires immediate human review.",
-                        keywordEvaluation.signals(),
+                        sanitizeReason("Potentially critical content detected with unsupported language; requires immediate human review."),
+                        null,
                         LocalDateTime.now(ZoneOffset.UTC),
                         true
                 );
@@ -152,8 +152,8 @@ public class TicketUrgencyScoringService {
                     50,
                     "LOW",
                     0.0,
-                    "Language outside English/Philippine dialect policy. Routed for human review.",
-                    "Unsupported language; manual assessment required",
+                    sanitizeReason("Language outside English/Philippine dialect policy. Routed for human review."),
+                    null,
                     LocalDateTime.now(ZoneOffset.UTC),
                     true
             );
@@ -167,8 +167,8 @@ public class TicketUrgencyScoringService {
 
         String priority = normalizePriority(node.path("priorityLevel").asText(null), score);
         double confidence = clamp(node.path("confidence").asDouble(0.65), 0.0, 1.0);
-        String reason = truncate(node.path("reason").asText("Urgency scored by Gemini"), 500);
-        String signals = parseSignals(node.path("signals"));
+        String reason = sanitizeReason(node.path("reason").asText("Urgency scored by Gemini"));
+        String signals = null;
 
         boolean urgent = node.has("urgent")
                 ? node.path("urgent").asBoolean(false)
@@ -199,8 +199,8 @@ public class TicketUrgencyScoringService {
                         95,
                         "CRITICAL",
                         0.70,
-                        "Critical safety keyword detected in ticket content.",
-                        "Explicit harm or threat phrase detected",
+                        sanitizeReason("Critical safety keyword detected in ticket content."),
+                        null,
                         LocalDateTime.now(ZoneOffset.UTC),
                         false
                 );
@@ -214,8 +214,8 @@ public class TicketUrgencyScoringService {
                         90,
                         "CRITICAL",
                         0.78,
-                        "Bullying, harassment, or abuse signal detected in ticket content.",
-                        "Bullying/harassment/abuse phrase detected",
+                        sanitizeReason("Bullying, harassment, or abuse signal detected in ticket content."),
+                        null,
                         LocalDateTime.now(ZoneOffset.UTC),
                         false
                 );
@@ -255,13 +255,21 @@ public class TicketUrgencyScoringService {
         String priority = normalizePriority(null, score);
         boolean urgent = score >= 60 || "HIGH".equals(priority) || "CRITICAL".equals(priority);
 
+        String fallbackReason = "Fallback urgency scoring applied.";
+        if (source != null) {
+            String normalizedSource = source.toLowerCase(Locale.ROOT);
+            if (normalizedSource.contains("gemini")) {
+                fallbackReason = "AI assistant hit its limit. Please wait for it to cool down.";
+            }
+        }
+
         TicketUrgencyEvaluation fallbackEvaluation = new TicketUrgencyEvaluation(
                 urgent,
                 score,
                 priority,
                 0.58,
-                truncate("Fallback urgency scoring applied: " + source, 500),
-                deriveFallbackSignals(input, ageHours),
+                sanitizeReason(fallbackReason),
+                null,
                 LocalDateTime.now(ZoneOffset.UTC),
                 false
         );
@@ -280,8 +288,8 @@ public class TicketUrgencyScoringService {
                         Math.max(base.score(), 95),
                         "CRITICAL",
                         Math.max(base.confidence(), 0.75),
-                        "Critical safety keyword detected in ticket content.",
-                        "Explicit harm or threat phrase detected",
+                        sanitizeReason("Critical safety keyword detected in ticket content."),
+                        null,
                         LocalDateTime.now(ZoneOffset.UTC),
                         base.needsHumanReview()
                 );
@@ -295,8 +303,8 @@ public class TicketUrgencyScoringService {
                         Math.max(base.score(), 90),
                         "CRITICAL",
                         Math.max(base.confidence(), 0.78),
-                        "Bullying, harassment, or abuse signal detected in ticket content.",
-                        "Bullying/harassment/abuse phrase detected",
+                        sanitizeReason("Bullying, harassment, or abuse signal detected in ticket content."),
+                        null,
                         LocalDateTime.now(ZoneOffset.UTC),
                         base.needsHumanReview()
                 );
@@ -415,30 +423,23 @@ public class TicketUrgencyScoringService {
         return trimmed;
     }
 
-    private String parseSignals(JsonNode signalsNode) {
-        if (signalsNode == null || !signalsNode.isArray() || signalsNode.isEmpty()) {
+    private String sanitizeReason(String rawReason) {
+        if (rawReason == null || rawReason.isBlank()) {
             return null;
         }
-        StringBuilder builder = new StringBuilder();
-        for (JsonNode signal : signalsNode) {
-            if (signal == null || signal.asText().isBlank()) {
-                continue;
-            }
-            if (!builder.isEmpty()) {
-                builder.append("; ");
-            }
-            builder.append(signal.asText().trim());
-        }
-        String combined = builder.toString().trim();
-        return combined.isEmpty() ? null : truncate(combined, 1000);
-    }
 
-    private String deriveFallbackSignals(TicketUrgencyInput input, long ageHours) {
-        String statusName = input.status() == null ? "UNKNOWN" : input.status().name();
-        if (input.lastAdminResponseAt() == null && ageHours >= 36) {
-            return "No admin response yet; status=" + statusName + "; ageHours=" + ageHours;
+        String cleaned = rawReason
+                .replaceAll("(?i)\\bstatus\\s*=\\s*[^;\\n]+;?\\s*", "")
+                .replaceAll("(?i)\\bageHours\\s*=\\s*\\d+;?\\s*", "")
+                .replaceAll("(?i)\\bsignals?\\s*:\\s*[^\\n]+", "")
+                .replaceAll("\\s{2,}", " ")
+                .trim();
+
+        if (cleaned.endsWith(";")) {
+            cleaned = cleaned.substring(0, cleaned.length() - 1).trim();
         }
-        return "Rule-based fallback; status=" + statusName + "; ageHours=" + ageHours;
+
+        return truncate(cleaned.isEmpty() ? "Urgency assessed from ticket context." : cleaned, 500);
     }
 
     private String sanitizeText(String text) {
