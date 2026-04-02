@@ -8,9 +8,9 @@ Deploy the UCMS backend to Railway or Render (free tier). Configure all required
 - [x] Add Dockerfile (or verify Railway/Render native Java 21 buildpack works)
 - [x] Configure platform health check path to /api/health
 - [x] Set SPRING_PROFILES_ACTIVE=prod in platform environment
-- [ ] Verify Flyway migrations run automatically on startup in production
-- [ ] Smoke test all critical endpoints after deployment (auth, ticket create, ticket list)
-- [ ] Update README.md with deployment steps and live base URL
+- [x] Verify Flyway migrations run automatically on startup in production
+- [x] Smoke test all critical endpoints after deployment (auth, ticket create, ticket list)
+- [x] Update README.md with deployment steps and live base URL
 
 ## Acceptance Criteria
 - GET /api/health returns 200 with no auth required
