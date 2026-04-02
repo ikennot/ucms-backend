@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - development
-
+      -infra/deployment
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
