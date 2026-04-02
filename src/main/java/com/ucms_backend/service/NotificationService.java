@@ -1,8 +1,11 @@
 package com.ucms_backend.service;
 
 import com.ucms_backend.dto.NotificationResponse;
+import com.ucms_backend.dto.RealtimeEventResponse;
 import com.ucms_backend.exception.AppException;
 import com.ucms_backend.model.entity.Notification;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import com.ucms_backend.repository.NotificationRepository;
 import java.util.List;
 import java.util.UUID;
@@ -12,9 +15,11 @@ import org.springframework.stereotype.Service;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final RealtimeSseService realtimeSseService;
 
-    public NotificationService(NotificationRepository notificationRepository) {
+    public NotificationService(NotificationRepository notificationRepository, RealtimeSseService realtimeSseService) {
         this.notificationRepository = notificationRepository;
+        this.realtimeSseService = realtimeSseService;
     }
 
     public List<NotificationResponse> getNotifications(UUID userId) {
@@ -29,6 +34,7 @@ public class NotificationService {
 
         notification.setRead(true);
         Notification saved = notificationRepository.save(notification);
+        publishNotificationEvent(userId, saved.getId(), "NOTIFICATION_READ", "STUDENT");
         return NotificationResponse.from(saved);
     }
 
@@ -36,6 +42,7 @@ public class NotificationService {
         List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
         notifications.forEach(n -> n.setRead(true));
         notificationRepository.saveAll(notifications);
+        publishNotificationEvent(userId, null, "NOTIFICATIONS_READ_ALL", "STUDENT");
     }
 
     public void createNotification(UUID userId, Long ticketId, String message) {
@@ -44,6 +51,17 @@ public class NotificationService {
                 .ticketId(ticketId)
                 .message(message)
                 .build();
-        notificationRepository.save(notification);
+        Notification saved = notificationRepository.save(notification);
+        publishNotificationEvent(userId, saved.getId(), "NOTIFICATION_CREATED", "SYSTEM");
+    }
+
+    private void publishNotificationEvent(UUID userId, Long notificationId, String eventType, String actorRole) {
+        realtimeSseService.publishToUser(userId, RealtimeEventResponse.builder()
+                .domain("notifications")
+                .eventType(eventType)
+                .entityId(notificationId != null ? String.valueOf(notificationId) : userId.toString())
+                .updatedAt(LocalDateTime.now(ZoneOffset.UTC))
+                .actorRole(actorRole)
+                .build());
     }
 }

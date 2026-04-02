@@ -1,6 +1,7 @@
 package com.ucms_backend.service;
 
 import com.ucms_backend.dto.CreateTicketRequest;
+import com.ucms_backend.dto.RealtimeEventResponse;
 import com.ucms_backend.dto.TicketResponse;
 import com.ucms_backend.dto.UrgencyOverrideRequest;
 import com.ucms_backend.dto.UpdateStatusRequest;
@@ -16,6 +17,7 @@ import com.ucms_backend.repository.TicketResponseRepository;
 import com.ucms_backend.security.SecurityUtils;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -41,6 +43,7 @@ public class TicketService {
     private final TicketNumberGenerator ticketNumberGenerator;
     private final NotificationService notificationService;
     private final TicketUrgencyScoringService ticketUrgencyScoringService;
+    private final RealtimeSseService realtimeSseService;
 
     public TicketService(
             TicketRepository ticketRepository,
@@ -49,7 +52,8 @@ public class TicketService {
             TicketResponseRepository ticketResponseRepository,
             TicketNumberGenerator ticketNumberGenerator,
             NotificationService notificationService,
-            TicketUrgencyScoringService ticketUrgencyScoringService
+            TicketUrgencyScoringService ticketUrgencyScoringService,
+            RealtimeSseService realtimeSseService
     ) {
         this.ticketRepository = ticketRepository;
         this.categoryRepository = categoryRepository;
@@ -58,6 +62,7 @@ public class TicketService {
         this.ticketNumberGenerator = ticketNumberGenerator;
         this.notificationService = notificationService;
         this.ticketUrgencyScoringService = ticketUrgencyScoringService;
+        this.realtimeSseService = realtimeSseService;
     }
 
     private String resolveCategoryName(Long categoryId) {
@@ -184,6 +189,7 @@ public class TicketService {
 
         applyUrgency(ticket);
         Ticket saved = ticketRepository.save(ticket);
+        publishTicketEvent(saved, "TICKET_CREATED", "STUDENT");
         return toResponse(saved);
     }
 
@@ -215,6 +221,49 @@ public class TicketService {
 
             if (!includeArchived) {
                 spec = spec.and((root, query, cb) -> cb.isFalse(root.get("archived")));
+            }
+
+            List<Ticket> tickets = ticketRepository.findAll(spec);
+            Set<Long> ticketIdsWithResponses = findTicketIdsWithResponses(tickets);
+            return tickets.stream()
+                    .map(ticket -> toResponse(ticket, ticketIdsWithResponses))
+                    .toList();
+        }
+
+        return List.of();
+    }
+
+    public List<TicketResponse> getTicketsSince(Instant since, boolean includeArchived) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        String role = SecurityUtils.getCurrentRole();
+        LocalDateTime sinceUtc = since != null ? LocalDateTime.ofInstant(since, ZoneOffset.UTC) : null;
+
+        if ("STUDENT".equals(role)) {
+            List<Ticket> tickets = includeArchived
+                    ? ticketRepository.findByUserId(userId)
+                    : ticketRepository.findByUserIdAndArchivedFalse(userId);
+
+            if (sinceUtc != null) {
+                tickets = tickets.stream()
+                        .filter(ticket -> ticket.getUpdatedAt() != null && !ticket.getUpdatedAt().isBefore(sinceUtc))
+                        .toList();
+            }
+
+            Set<Long> ticketIdsWithResponses = findTicketIdsWithResponses(tickets);
+            return tickets.stream()
+                    .map(ticket -> toResponse(ticket, ticketIdsWithResponses))
+                    .toList();
+        }
+
+        if ("ADMIN".equals(role)) {
+            Specification<Ticket> spec = (root, query, cb) -> cb.conjunction();
+
+            if (!includeArchived) {
+                spec = spec.and((root, query, cb) -> cb.isFalse(root.get("archived")));
+            }
+
+            if (sinceUtc != null) {
+                spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("updatedAt"), sinceUtc));
             }
 
             List<Ticket> tickets = ticketRepository.findAll(spec);
@@ -265,6 +314,7 @@ public class TicketService {
         ticket.setArchived(true);
         applyUrgency(ticket);
         Ticket saved = ticketRepository.save(ticket);
+        publishTicketEvent(saved, "TICKET_CONFIRMED_RESOLVED", "STUDENT");
 
         notificationService.createNotification(
                 saved.getUserId(),
@@ -308,6 +358,7 @@ public class TicketService {
         }
         applyUrgency(ticket);
         Ticket saved = ticketRepository.save(ticket);
+        publishTicketEvent(saved, "TICKET_STATUS_UPDATED", "ADMIN");
 
         notificationService.createNotification(
                 saved.getUserId(),
@@ -316,5 +367,18 @@ public class TicketService {
         );
 
         return toResponse(saved);
+    }
+
+    private void publishTicketEvent(Ticket ticket, String eventType, String actorRole) {
+        RealtimeEventResponse event = RealtimeEventResponse.builder()
+                .domain("tickets")
+                .eventType(eventType)
+                .entityId(String.valueOf(ticket.getId()))
+                .updatedAt(ticket.getUpdatedAt())
+                .actorRole(actorRole)
+                .build();
+
+        realtimeSseService.publishToUser(ticket.getUserId(), event);
+        realtimeSseService.publishToAdmins(event);
     }
 }
