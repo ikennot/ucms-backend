@@ -73,18 +73,17 @@ cp src/main/resources/application.yaml.example src/main/resources/application.ya
 
 ## 🚢 Deployment
 
-**Live base URL:** `https://ucms-backend-latest.onrender.com`
+**Live base URL:** `https://ucms-backend-production-bc69.up.railway.app`
 
-### Deployment Steps (Render via Docker Hub)
+### Deployment Steps (Railway via Docker Hub)
 
 The CI/CD pipeline automatically builds and pushes the Docker image to [`kenz2025/ucms-backend`](https://hub.docker.com/r/kenz2025/ucms-backend) on every push to `main` or `development`.
 
-1. In Render, create a new **Web Service** and choose **Deploy an existing image from a registry**
-2. Set the image URL to `docker.io/kenz2025/ucms-backend:latest`
-3. Set **Health Check Path** to `/api/health`
-4. Add all required environment variables (see table below)
-5. Deploy — Flyway migrations run automatically on startup
-6. Confirm deployment: `GET https://ucms-backend-latest.onrender.com/api/health` should return `200 { "status": "UP" }`
+1. In Railway, create a new project and choose **Deploy from Docker Image**
+2. Set the image to `kenz2025/ucms-backend:latest`
+3. Add all required environment variables (see table below)
+4. Deploy — Flyway migrations run automatically on startup
+5. Confirm deployment: `GET https://ucms-backend-production-bc69.up.railway.app/api/health` should return `200 { "status": "UP" }`
 
 **Required GitHub Secrets** (for the Docker publish workflow):
 
