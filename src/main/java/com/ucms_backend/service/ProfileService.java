@@ -1,12 +1,15 @@
 package com.ucms_backend.service;
 
 import com.ucms_backend.dto.ProfileResponse;
+import com.ucms_backend.dto.RealtimeEventResponse;
 import com.ucms_backend.dto.UpdateEmailRequest;
 import com.ucms_backend.dto.UpdateProfileRequest;
 import com.ucms_backend.exception.AppException;
 import com.ucms_backend.model.entity.Profile;
 import com.ucms_backend.repository.ProfileRepository;
 import java.util.UUID;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,10 +17,16 @@ public class ProfileService {
 
     private final ProfileRepository profileRepository;
     private final SupabaseAuthService supabaseAuthService;
+    private final RealtimeSseService realtimeSseService;
 
-    public ProfileService(ProfileRepository profileRepository, SupabaseAuthService supabaseAuthService) {
+    public ProfileService(
+            ProfileRepository profileRepository,
+            SupabaseAuthService supabaseAuthService,
+            RealtimeSseService realtimeSseService
+    ) {
         this.profileRepository = profileRepository;
         this.supabaseAuthService = supabaseAuthService;
+        this.realtimeSseService = realtimeSseService;
     }
 
     public ProfileResponse getMyProfile(UUID authUserId) {
@@ -37,6 +46,7 @@ public class ProfileService {
         profile.setYearLevel(request.getYearLevel());
 
         Profile saved = profileRepository.save(profile);
+        publishProfileEvent(saved.getAuthUserId(), "PROFILE_UPDATED");
         return ProfileResponse.from(saved);
     }
 
@@ -51,6 +61,7 @@ public class ProfileService {
 
         Profile saved = profileRepository.save(profile);
         supabaseAuthService.sendVerificationEmail(authUserId, request.getEmail());
+        publishProfileEvent(saved.getAuthUserId(), "PROFILE_EMAIL_UPDATED");
         return ProfileResponse.from(saved);
     }
 
@@ -66,7 +77,18 @@ public class ProfileService {
 
         profile.setEmailVerified(true);
         Profile saved = profileRepository.save(profile);
+        publishProfileEvent(saved.getAuthUserId(), "PROFILE_EMAIL_VERIFIED");
         return ProfileResponse.from(saved);
+    }
+
+    private void publishProfileEvent(UUID userId, String eventType) {
+        realtimeSseService.publishToUser(userId, RealtimeEventResponse.builder()
+                .domain("profile")
+                .eventType(eventType)
+                .entityId(userId.toString())
+                .updatedAt(LocalDateTime.now(ZoneOffset.UTC))
+                .actorRole("SYSTEM")
+                .build());
     }
 
     private void ensureOwner(Profile profile, UUID authUserId) {

@@ -199,6 +199,59 @@
               ]
             }
           }
+        },
+        {
+          "name": "Change My Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"password123\",\n  \"newPassword\": \"newPassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/me/password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "password"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Confirm My Email Verified",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/me/email/verify",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "email",
+                "verify"
+              ]
+            }
+          }
         }
       ]
     },
@@ -345,7 +398,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/tickets?status={{ticket_status}}&categoryId={{category_id}}",
+              "raw": "{{base_url}}/api/tickets?status={{ticket_status}}&categoryId={{category_id}}&includeArchived={{include_archived}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -361,6 +414,10 @@
                 {
                   "key": "categoryId",
                   "value": "{{category_id}}"
+                },
+                {
+                  "key": "includeArchived",
+                  "value": "{{include_archived}}"
                 }
               ]
             }
@@ -704,6 +761,128 @@
           }
         }
       ]
+    },
+    {
+      "name": "AI Admin",
+      "item": [
+        {
+          "name": "Gemini Health (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/ai/gemini/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "ai",
+                "gemini",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rescore Open Tickets (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/ai/gemini/rescore/open?limit={{rescore_limit}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "ai",
+                "gemini",
+                "rescore",
+                "open"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "{{rescore_limit}}"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Override Ticket Urgency (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"priorityLevel\": \"CRITICAL\",\n  \"reason\": \"Escalated by admin after review\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/ai/tickets/{{ticket_id}}/urgency-override",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "ai",
+                "tickets",
+                "{{ticket_id}}",
+                "urgency-override"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
     }
   ],
   "variable": [
@@ -734,6 +913,18 @@
     {
       "key": "ticket_status",
       "value": "PENDING"
+    },
+    {
+      "key": "include_archived",
+      "value": "false"
+    },
+    {
+      "key": "admin_token",
+      "value": ""
+    },
+    {
+      "key": "rescore_limit",
+      "value": "100"
     }
   ]
 }

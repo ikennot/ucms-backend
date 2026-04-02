@@ -56,4 +56,39 @@ public class EmailService {
             throw new RuntimeException("Failed to send verification email", e);
         }
     }
+
+    public void sendPasswordResetEmail(String toEmail, String resetLink) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(FROM, FROM_NAME);
+            helper.setTo(toEmail);
+            helper.setSubject("Reset Your Password - UCMS");
+
+            String html = """
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+                        <h2 style="color: #333;">Reset Your Password</h2>
+                        <p>We received a request to reset your UCMS password. Click the button below to continue.</p>
+                        <a href="%s"
+                           style="display: inline-block; padding: 12px 24px; background-color: #F5A623;
+                                  color: white; text-decoration: none; border-radius: 8px;
+                                  font-weight: bold; margin: 16px 0;">
+                            Reset Password
+                        </a>
+                        <p style="color: #888; font-size: 12px;">If you did not request this, you can safely ignore this email.</p>
+                    </div>
+                    """.formatted(resetLink);
+
+            helper.setText(html, true);
+            mailSender.send(message);
+            log.info("Password reset email sent to {}", toEmail);
+        } catch (MessagingException e) {
+            log.error("Failed to send password reset email to {}: {}", toEmail, e.getMessage());
+            throw new RuntimeException("Failed to send password reset email", e);
+        } catch (Exception e) {
+            log.error("Unexpected error sending password reset email to {}: {}", toEmail, e.getMessage());
+            throw new RuntimeException("Failed to send password reset email", e);
+        }
+    }
 }

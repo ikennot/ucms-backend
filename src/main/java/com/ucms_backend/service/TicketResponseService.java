@@ -1,6 +1,7 @@
 package com.ucms_backend.service;
 
 import com.ucms_backend.dto.CreateResponseRequest;
+import com.ucms_backend.dto.RealtimeEventResponse;
 import com.ucms_backend.dto.TicketResponseDto;
 import com.ucms_backend.exception.AppException;
 import com.ucms_backend.model.entity.Ticket;
@@ -10,6 +11,8 @@ import com.ucms_backend.repository.TicketResponseRepository;
 import com.ucms_backend.security.SecurityUtils;
 import java.util.List;
 import java.util.UUID;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -18,15 +21,18 @@ public class TicketResponseService {
     private final TicketRepository ticketRepository;
     private final TicketResponseRepository ticketResponseRepository;
     private final NotificationService notificationService;
+    private final RealtimeSseService realtimeSseService;
 
     public TicketResponseService(
             TicketRepository ticketRepository,
             TicketResponseRepository ticketResponseRepository,
-            NotificationService notificationService
+            NotificationService notificationService,
+            RealtimeSseService realtimeSseService
     ) {
         this.ticketRepository = ticketRepository;
         this.ticketResponseRepository = ticketResponseRepository;
         this.notificationService = notificationService;
+        this.realtimeSseService = realtimeSseService;
     }
 
     public TicketResponseDto addResponse(Long ticketId, CreateResponseRequest request) {
@@ -39,6 +45,7 @@ public class TicketResponseService {
                 .ticketId(ticket.getId())
                 .adminId(adminId)
                 .message(request.getMessage())
+                .ticketStatus(ticket.getStatus().name())
                 .build();
 
         TicketResponse saved = ticketResponseRepository.save(response);
@@ -48,6 +55,16 @@ public class TicketResponseService {
                 ticket.getId(),
                 "Admin posted a response to your ticket #" + ticket.getTicketNumber()
         );
+
+        RealtimeEventResponse event = RealtimeEventResponse.builder()
+                .domain("tickets")
+                .eventType("TICKET_RESPONSE_CREATED")
+                .entityId(String.valueOf(ticket.getId()))
+                .updatedAt(LocalDateTime.now(ZoneOffset.UTC))
+                .actorRole("ADMIN")
+                .build();
+        realtimeSseService.publishToUser(ticket.getUserId(), event);
+        realtimeSseService.publishToAdmins(event);
 
         return TicketResponseDto.from(saved);
     }

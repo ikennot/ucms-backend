@@ -18,6 +18,7 @@ public class TicketResponseDto {
     private Long ticketId;
     private UUID adminId;
     private String message;
+    private String ticketStatus;
     private LocalDateTime createdAt;
 
     public static TicketResponseDto from(TicketResponse response) {
@@ -26,6 +27,7 @@ public class TicketResponseDto {
                 .ticketId(response.getTicketId())
                 .adminId(response.getAdminId())
                 .message(response.getMessage())
+                .ticketStatus(response.getTicketStatus())
                 .createdAt(response.getCreatedAt())
                 .build();
     }

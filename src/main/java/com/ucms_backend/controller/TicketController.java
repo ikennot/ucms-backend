@@ -40,9 +40,10 @@ public class TicketController {
     @PreAuthorize("hasAnyRole('STUDENT','ADMIN')")
     public ResponseEntity<ApiResponse<List<TicketResponse>>> getTickets(
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) Long categoryId
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "false") boolean includeArchived
     ) {
-        List<TicketResponse> tickets = ticketService.getTickets(status, categoryId);
+        List<TicketResponse> tickets = ticketService.getTickets(status, categoryId, includeArchived);
         return ResponseEntity.ok(ApiResponse.ok("Tickets retrieved", tickets));
     }
 

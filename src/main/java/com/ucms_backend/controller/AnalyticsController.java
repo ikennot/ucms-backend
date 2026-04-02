@@ -1,5 +1,6 @@
 package com.ucms_backend.controller;
 
+import com.ucms_backend.dto.AnalyticsOverviewResponse;
 import com.ucms_backend.dto.AnalyticsSummaryResponse;
 import com.ucms_backend.dto.ApiResponse;
 import com.ucms_backend.dto.CategoryCountResponse;
@@ -27,6 +28,13 @@ public class AnalyticsController {
     public ResponseEntity<ApiResponse<AnalyticsSummaryResponse>> getSummary() {
         AnalyticsSummaryResponse summary = analyticsService.getSummary();
         return ResponseEntity.ok(ApiResponse.ok("Analytics summary retrieved", summary));
+    }
+
+    @GetMapping("/overview")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<AnalyticsOverviewResponse>> getOverview() {
+        AnalyticsOverviewResponse overview = analyticsService.getOverview();
+        return ResponseEntity.ok(ApiResponse.ok("Analytics overview retrieved", overview));
     }
 
     @GetMapping("/by-category")
