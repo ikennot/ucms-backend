@@ -42,6 +42,9 @@ class TicketResponseServiceTest {
     @Mock
     private NotificationService notificationService;
 
+    @Mock
+    private RealtimeSseService realtimeSseService;
+
     @InjectMocks
     private TicketResponseService ticketResponseService;
 

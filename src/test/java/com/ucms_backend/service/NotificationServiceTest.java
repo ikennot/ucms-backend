@@ -30,6 +30,9 @@ class NotificationServiceTest {
     @Mock
     private NotificationRepository notificationRepository;
 
+    @Mock
+    private RealtimeSseService realtimeSseService;
+
     @InjectMocks
     private NotificationService notificationService;
 

@@ -53,7 +53,8 @@ class AnalyticsServiceTest {
     void getSummary_mixedStatuses_computesCorrectPercentage() {
         when(ticketRepository.count()).thenReturn(4L);
         when(ticketRepository.countByStatusIn(List.of(TicketStatus.RESOLVED, TicketStatus.CLOSED))).thenReturn(3L);
-        when(ticketRepository.countByStatusIn(List.of(TicketStatus.PENDING, TicketStatus.IN_PROGRESS))).thenReturn(1L);
+        when(ticketRepository.countByStatusIn(List.of(TicketStatus.PENDING))).thenReturn(1L);
+        when(ticketRepository.countByStatusIn(List.of(TicketStatus.IN_PROGRESS))).thenReturn(0L);
 
         AnalyticsSummaryResponse response = analyticsService.getSummary();
 

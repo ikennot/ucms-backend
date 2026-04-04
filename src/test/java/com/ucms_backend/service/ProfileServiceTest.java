@@ -36,6 +36,9 @@ class ProfileServiceTest {
     @Mock
     private SupabaseAuthService supabaseAuthService;
 
+    @Mock
+    private RealtimeSseService realtimeSseService;
+
     @InjectMocks
     private ProfileService profileService;
 
