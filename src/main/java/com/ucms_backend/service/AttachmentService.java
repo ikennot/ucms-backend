@@ -25,6 +25,7 @@ public class AttachmentService {
     private final TicketRepository ticketRepository;
     private final TicketAttachmentRepository ticketAttachmentRepository;
     private final ProfileRepository profileRepository;
+    private final NotificationService notificationService;
     private final SupabaseStorageService supabaseStorageService;
     private final long maxSizeBytes;
     private final Set<String> allowedMimeTypes;
@@ -33,12 +34,14 @@ public class AttachmentService {
             TicketRepository ticketRepository,
             TicketAttachmentRepository ticketAttachmentRepository,
             ProfileRepository profileRepository,
+            NotificationService notificationService,
             SupabaseStorageService supabaseStorageService,
             AttachmentProperties attachmentProperties
     ) {
         this.ticketRepository = ticketRepository;
         this.ticketAttachmentRepository = ticketAttachmentRepository;
         this.profileRepository = profileRepository;
+        this.notificationService = notificationService;
         this.supabaseStorageService = supabaseStorageService;
         this.maxSizeBytes = attachmentProperties.getMaxSizeBytes();
         this.allowedMimeTypes = attachmentProperties.getAllowedMimeTypes();
@@ -82,6 +85,18 @@ public class AttachmentService {
 
         TicketAttachment saved = ticketAttachmentRepository.save(attachment);
         String signedUrl = supabaseStorageService.generateSignedUrl(storagePath);
+
+        List<Profile> admins = profileRepository.findByRole("ADMIN");
+        String filename = saved.getOriginalFilename() != null ? saved.getOriginalFilename() : "file";
+        for (Profile admin : admins) {
+            if (admin != null && admin.getAuthUserId() != null) {
+                notificationService.createNotification(
+                        admin.getAuthUserId(),
+                        ticket.getId(),
+                        "Student uploaded attachment on ticket #" + ticket.getTicketNumber() + ": " + filename
+                );
+            }
+        }
 
         return AttachmentResponse.from(saved, signedUrl);
     }

@@ -164,6 +164,15 @@ public class TicketService {
         return new HashSet<>(foundIds);
     }
 
+    private void notifyAdmins(Ticket ticket, String message) {
+        List<Profile> admins = profileRepository.findByRole("ADMIN");
+        for (Profile admin : admins) {
+            if (admin != null && admin.getAuthUserId() != null) {
+                notificationService.createNotification(admin.getAuthUserId(), ticket.getId(), message);
+            }
+        }
+    }
+
     public TicketResponse createTicket(CreateTicketRequest request) {
         UUID userId = SecurityUtils.getCurrentUserId();
         Profile profile = profileRepository.findById(userId)
@@ -190,6 +199,7 @@ public class TicketService {
         applyUrgency(ticket);
         Ticket saved = ticketRepository.save(ticket);
         publishTicketEvent(saved, "TICKET_CREATED", "STUDENT");
+        notifyAdmins(saved, "New ticket submitted: #" + saved.getTicketNumber());
         return toResponse(saved);
     }
 
@@ -321,6 +331,8 @@ public class TicketService {
                 saved.getId(),
                 "You have confirmed your ticket as resolved."
         );
+
+        notifyAdmins(saved, "Student confirmed ticket as resolved: #" + saved.getTicketNumber());
 
         return toResponse(saved);
     }
