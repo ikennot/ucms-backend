@@ -25,21 +25,21 @@ public class NotificationController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasAnyRole('STUDENT','ADMIN')")
     public ResponseEntity<ApiResponse<List<NotificationResponse>>> getNotifications() {
         List<NotificationResponse> notifications = notificationService.getNotifications(getUserId());
         return ResponseEntity.ok(ApiResponse.ok("Notifications retrieved", notifications));
     }
 
     @PatchMapping("/{id}/read")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasAnyRole('STUDENT','ADMIN')")
     public ResponseEntity<ApiResponse<NotificationResponse>> markAsRead(@PathVariable Long id) {
         NotificationResponse notification = notificationService.markAsRead(id, getUserId());
         return ResponseEntity.ok(ApiResponse.ok("Notification marked as read", notification));
     }
 
     @PatchMapping("/read-all")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasAnyRole('STUDENT','ADMIN')")
     public ResponseEntity<ApiResponse<Void>> markAllAsRead() {
         notificationService.markAllAsRead(getUserId());
         return ResponseEntity.ok(ApiResponse.ok("All notifications marked as read"));

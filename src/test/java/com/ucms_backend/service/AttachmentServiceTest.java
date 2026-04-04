@@ -48,6 +48,9 @@ class AttachmentServiceTest {
     private ProfileRepository profileRepository;
 
     @Mock
+    private NotificationService notificationService;
+
+    @Mock
     private SupabaseStorageService supabaseStorageService;
 
     private AttachmentService attachmentService;
@@ -66,6 +69,7 @@ class AttachmentServiceTest {
                 ticketRepository,
                 ticketAttachmentRepository,
                 profileRepository,
+                notificationService,
                 supabaseStorageService,
                 attachmentProperties
         );
