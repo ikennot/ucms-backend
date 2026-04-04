@@ -71,6 +71,56 @@ cp src/main/resources/application.yaml.example src/main/resources/application.ya
 
 ---
 
+## 🚢 Deployment
+
+**Live base URL:** `https://ucms-backend-production-bc69.up.railway.app`
+
+### Deployment Steps (Railway via Docker Hub)
+
+The CI/CD pipeline automatically builds and pushes the Docker image to [`kenz2025/ucms-backend`](https://hub.docker.com/r/kenz2025/ucms-backend) on every push to `main` or `development`.
+
+1. In Railway, create a new project and choose **Deploy from Docker Image**
+2. Set the image to `kenz2025/ucms-backend:latest`
+3. Add all required environment variables (see table below)
+4. Deploy — Flyway migrations run automatically on startup
+5. Confirm deployment: `GET https://ucms-backend-production-bc69.up.railway.app/api/health` should return `200 { "status": "UP" }`
+
+**Required GitHub Secrets** (for the Docker publish workflow):
+
+| Secret | Description |
+|---|---|
+| `DOCKERHUB_USERNAME` | Your Docker Hub username (`kenz2025`) |
+| `DOCKERHUB_TOKEN` | Docker Hub access token (generate at hub.docker.com → Account Settings → Security) |
+
+Set these environment variables in your deployment platform (Railway/Render):
+
+| Variable | Required | Description |
+|---|---|---|
+| `SPRING_DATASOURCE_URL` | Yes | JDBC URL for the production PostgreSQL connection |
+| `SPRING_DATASOURCE_USERNAME` | Yes | Database username for the production connection |
+| `SPRING_DATASOURCE_PASSWORD` | Yes | Database password for the production connection |
+| `SUPABASE_URL` | Yes | Supabase project URL (for example `https://<project-ref>.supabase.co`) |
+| `SUPABASE_ANON_KEY` | Yes | Supabase anon/public API key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Supabase service role key (secret, backend only) |
+| `SUPABASE_JWKS_URI` | Yes | Supabase JWKS endpoint (`<supabase-url>/auth/v1/.well-known/jwks.json`) |
+| `SUPABASE_JWT_ISSUER` | Yes | Expected JWT issuer (`<supabase-url>/auth/v1`) |
+| `SUPABASE_STORAGE_SIGNED_URL_EXPIRY_SECONDS` | Yes | Signed URL lifetime in seconds for private storage access |
+
+Also set the Spring profile in the platform environment:
+
+- `SPRING_PROFILES_ACTIVE=prod`
+
+### Verify Flyway on first production startup
+
+After deploying to Railway/Render, open the service logs and confirm Flyway runs during boot.
+
+- Look for Flyway startup lines (for example `Flyway Community Edition` and `Migrating schema`)
+- Confirm migration success lines (for example `Successfully applied`)
+- Confirm the app starts after migrations (for example `Tomcat started on port`)
+- If the database is already populated, `baseline-on-migrate: true` in `application-prod.yaml` allows startup without rerunning old scripts
+
+---
+
 ## 📦 Package Structure
 
 ```

@@ -32,6 +32,7 @@ build/
 ### VS Code ###
 .vscode/
 application.yaml
+application-prod.yaml
 .env
 
 # Secrets

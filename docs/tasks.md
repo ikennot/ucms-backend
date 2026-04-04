@@ -1,26 +1,27 @@
 ## Overview
-The existing Postman collection (UCMS-Auth.postman_collection.json) only covers auth endpoints. Expand it to cover all endpoints added in Phase 3 (Profile, Attachments, Responses, Notifications, Analytics) and Phase 4 (confirm-resolved, Categories CRUD). Collection must use environment variables and include example request/response bodies.
+Deploy the UCMS backend to Railway or Render (free tier). Configure all required environment variables, add a health check endpoint, and document the deployment process. The backend must connect to the shared Supabase project in production.
 
 ## Tasks
-- [x] Add Profile folder — GET /api/users/me, PUT /api/users/me, PUT /api/users/me/email (with example bodies)
-- [x] Add Tickets folder — POST /api/tickets, GET /api/tickets, GET /api/tickets/{id}, PATCH /api/tickets/{id}/status, PATCH /api/tickets/{id}/confirm-resolved (with example bodies and status values)
-- [x] Add Attachments folder — POST /api/tickets/{id}/attachments (multipart/form-data), GET /api/tickets/{id}/attachments
-- [x] Add Responses folder — POST /api/tickets/{id}/responses, GET /api/tickets/{id}/responses
-- [x] Add Notifications folder — GET /api/notifications, PATCH /api/notifications/{id}/read, PATCH /api/notifications/read-all
-- [x] Add Analytics folder — GET /api/analytics/summary, GET /api/analytics/by-category, GET /api/analytics/unresolved
-- [x] Add Categories folder — GET /api/categories, POST /api/categories, PUT /api/categories/{id}, DELETE /api/categories/{id}
-- [x] All requests use {{base_url}} and {{access_token}} environment variables
-- [x] Add admin_token environment variable for admin-only endpoints
-- [x] Save updated collection to docs/postman/UCMS-Full.postman_collection.json
+- [x] Add GET /api/health endpoint — returns 200 { status: UP, timestamp } — no auth required; used by platform health checks
+- [x] Create application-prod.yaml profile — production-safe config (no debug logging, ddl-auto=none, connection pool tuned)
+- [x] Document all required environment variables in README.md under a Deployment section: SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME, SPRING_DATASOURCE_PASSWORD, SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWKS_URI, SUPABASE_JWT_ISSUER, SUPABASE_STORAGE_SIGNED_URL_EXPIRY_SECONDS
+- [x] Add Dockerfile (or verify Railway/Render native Java 21 buildpack works)
+- [x] Configure platform health check path to /api/health
+- [x] Set SPRING_PROFILES_ACTIVE=prod in platform environment
+- [x] Verify Flyway migrations run automatically on startup in production
+- [x] Smoke test all critical endpoints after deployment (auth, ticket create, ticket list)
+- [x] Update README.md with deployment steps and live base URL
 
 ## Acceptance Criteria
-- Collection covers all endpoints in docs/api-contract.md plus PATCH /api/tickets/{id}/confirm-resolved
-- All requests use environment variables (no hardcoded URLs or tokens)
-- Each request has an example response body saved
-- Collection imports cleanly into Postman with no errors
-- README.md updated to reference UCMS-Full.postman_collection.json
+- GET /api/health returns 200 with no auth required
+- Backend starts successfully on Railway/Render with all env vars set
+- Flyway migrations run cleanly on first deploy
+- All GitHub Secrets are set in repo settings for CI
+- Smoke test passes: register, login, create ticket, list tickets
+- README.md documents deployment steps and environment variables
 
 ## References
-- docs/api-contract.md — full endpoint list
-- docs/postman/UCMS-Auth.postman_collection.json — existing collection
-- README.md — Postman usage section
+- docs/migration-runbook.md — required env vars
+- src/main/resources/application.yaml.example
+- .github/workflows/ — CI config
+- README.md
