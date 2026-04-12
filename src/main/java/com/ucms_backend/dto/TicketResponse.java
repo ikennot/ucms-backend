@@ -33,6 +33,8 @@ public class TicketResponse {
     private LocalDateTime urgencyUpdatedAt;
     private boolean urgencyOverridden;
     private String urgencyOverrideReason;
+    private java.util.UUID assignedAdminId;
+    private String assignedAdminName;
     private String studentName;
     private String studentId;
     private String studentCourse;
@@ -48,6 +50,10 @@ public class TicketResponse {
     }
 
     public static TicketResponse from(Ticket ticket, String categoryName, Profile profile, boolean hasAdminResponse) {
+        return from(ticket, categoryName, profile, hasAdminResponse, null);
+    }
+
+    public static TicketResponse from(Ticket ticket, String categoryName, Profile profile, boolean hasAdminResponse, String assignedAdminName) {
         return TicketResponse.builder()
                 .id(ticket.getId())
                 .ticketNumber(ticket.getTicketNumber())
@@ -67,6 +73,8 @@ public class TicketResponse {
                 .urgencyUpdatedAt(ticket.getUrgencyUpdatedAt())
                 .urgencyOverridden(ticket.isUrgencyOverridden())
                 .urgencyOverrideReason(ticket.getUrgencyOverrideReason())
+                .assignedAdminId(ticket.getAssignedAdminId())
+                .assignedAdminName(assignedAdminName)
                 .studentName(profile != null ? profile.getName() : null)
                 .studentId(profile != null ? profile.getStudentId() : null)
                 .studentCourse(profile != null ? profile.getCourse() : null)
