@@ -237,6 +237,61 @@ class AttachmentServiceTest {
     }
 
     @Test
+    void upload_admin_anyTicket_success() {
+        Ticket ticket = Ticket.builder()
+                .id(11L)
+                .userId(UUID.randomUUID()) // owned by a student, not the admin
+                .status(TicketStatus.PENDING)
+                .build();
+
+        setAuthenticatedUser(UUID.randomUUID(), "ADMIN");
+
+        when(ticketRepository.findById(11L)).thenReturn(Optional.of(ticket));
+        when(supabaseStorageService.generateSignedUrl(anyString())).thenReturn("admin-signed-url");
+        when(ticketAttachmentRepository.save(any(TicketAttachment.class))).thenAnswer(invocation -> {
+            TicketAttachment input = invocation.getArgument(0);
+            return TicketAttachment.builder()
+                    .id(20L)
+                    .ticketId(input.getTicketId())
+                    .storagePath(input.getStoragePath())
+                    .originalFilename(input.getOriginalFilename())
+                    .mimeType(input.getMimeType())
+                    .sizeBytes(input.getSizeBytes())
+                    .uploadedAt(LocalDateTime.now())
+                    .build();
+        });
+
+        AttachmentResponse response = attachmentService.uploadAttachment(11L, mockJpegFile());
+
+        assertEquals(20L, response.getId());
+        assertEquals("admin-signed-url", response.getSignedUrl());
+        verify(supabaseStorageService).uploadFile(anyString(), any(), anyString());
+        // Email-verified gate must be skipped for admins
+        verify(profileRepository, never()).findById(any());
+    }
+
+    @Test
+    void upload_admin_closedTicket_throws403() {
+        Ticket ticket = Ticket.builder()
+                .id(12L)
+                .userId(UUID.randomUUID())
+                .status(TicketStatus.CLOSED)
+                .build();
+
+        setAuthenticatedUser(UUID.randomUUID(), "ADMIN");
+
+        when(ticketRepository.findById(12L)).thenReturn(Optional.of(ticket));
+
+        AppException exception = assertThrows(AppException.class, () ->
+                attachmentService.uploadAttachment(12L, mockJpegFile())
+        );
+
+        assertEquals(403, exception.getStatus());
+        assertEquals("TICKET_CLOSED", exception.getErrorCode());
+        verify(supabaseStorageService, never()).uploadFile(anyString(), any(), anyString());
+    }
+
+    @Test
     void upload_fileTooLarge_throws413() {
         byte[] bigContent = new byte[11 * 1024 * 1024]; // 11MB — exceeds 10MB limit
         MockMultipartFile bigFile = new MockMultipartFile(

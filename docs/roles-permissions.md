@@ -40,7 +40,7 @@
 ### Attachments
 | Action | Student | Admin |
 |--------|:-------:|:-----:|
-| Upload attachment | ✅ own tickets (verified email) | ❌ |
+| Upload attachment | ✅ own tickets (verified email) | ✅ any ticket |
 | View attachments | ✅ own tickets | ✅ all |
 
 ### Responses
