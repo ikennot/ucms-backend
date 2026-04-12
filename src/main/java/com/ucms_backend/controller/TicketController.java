@@ -1,6 +1,7 @@
 package com.ucms_backend.controller;
 
 import com.ucms_backend.dto.ApiResponse;
+import com.ucms_backend.dto.AssignTicketRequest;
 import com.ucms_backend.dto.CreateTicketRequest;
 import com.ucms_backend.dto.TicketResponse;
 import com.ucms_backend.dto.UpdateStatusRequest;
@@ -62,6 +63,15 @@ public class TicketController {
     ) {
         TicketResponse ticketResponse = ticketService.updateStatus(id, request);
         return ResponseEntity.ok(ApiResponse.ok("Status updated", ticketResponse));
+    }
+
+    @PatchMapping("/{id}/assign")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<TicketResponse>> assignAdmin(
+            @PathVariable Long id,
+            @Valid @RequestBody AssignTicketRequest request) {
+        TicketResponse result = ticketService.assignAdmin(id, request);
+        return ResponseEntity.ok(ApiResponse.ok("Admin assigned", result));
     }
 
     @PatchMapping("/{id}/confirm-resolved")

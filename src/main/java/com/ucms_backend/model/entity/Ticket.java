@@ -34,6 +34,9 @@ public class Ticket {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
+    @Column(name = "assigned_admin_id")
+    private UUID assignedAdminId;
+
     @Column(name = "category_id", nullable = false)
     private Long categoryId;
 

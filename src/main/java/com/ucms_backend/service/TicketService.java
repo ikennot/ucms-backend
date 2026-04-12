@@ -1,5 +1,6 @@
 package com.ucms_backend.service;
 
+import com.ucms_backend.dto.AssignTicketRequest;
 import com.ucms_backend.dto.CreateTicketRequest;
 import com.ucms_backend.dto.RealtimeEventResponse;
 import com.ucms_backend.dto.TicketResponse;
@@ -71,20 +72,30 @@ public class TicketService {
                 .orElse(null);
     }
 
+    private String resolveAdminName(UUID adminId) {
+        if (adminId == null) return null;
+        return profileRepository.findById(adminId)
+                .map(Profile::getName)
+                .orElse(null);
+    }
+
     private TicketResponse toResponse(Ticket ticket) {
         boolean hasAdminResponse = ticketResponseRepository.existsByTicketId(ticket.getId());
-        return TicketResponse.from(ticket, resolveCategoryName(ticket.getCategoryId()), null, hasAdminResponse);
+        return TicketResponse.from(ticket, resolveCategoryName(ticket.getCategoryId()), null, hasAdminResponse,
+                resolveAdminName(ticket.getAssignedAdminId()));
     }
 
     private TicketResponse toResponse(Ticket ticket, Set<Long> ticketIdsWithResponses) {
         boolean hasAdminResponse = ticketIdsWithResponses.contains(ticket.getId());
-        return TicketResponse.from(ticket, resolveCategoryName(ticket.getCategoryId()), null, hasAdminResponse);
+        return TicketResponse.from(ticket, resolveCategoryName(ticket.getCategoryId()), null, hasAdminResponse,
+                resolveAdminName(ticket.getAssignedAdminId()));
     }
 
     private TicketResponse toDetailedResponse(Ticket ticket) {
         Profile studentProfile = profileRepository.findById(ticket.getUserId()).orElse(null);
         boolean hasAdminResponse = ticketResponseRepository.existsByTicketId(ticket.getId());
-        return TicketResponse.from(ticket, resolveCategoryName(ticket.getCategoryId()), studentProfile, hasAdminResponse);
+        return TicketResponse.from(ticket, resolveCategoryName(ticket.getCategoryId()), studentProfile, hasAdminResponse,
+                resolveAdminName(ticket.getAssignedAdminId()));
     }
 
     private void applyUrgency(Ticket ticket) {
@@ -335,6 +346,37 @@ public class TicketService {
         notifyAdmins(saved, "Student confirmed ticket as resolved: #" + saved.getTicketNumber());
 
         return toResponse(saved);
+    }
+
+    public TicketResponse assignAdmin(Long ticketId, AssignTicketRequest request) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new AppException(404, "TICKET_NOT_FOUND", "Ticket not found"));
+
+        if (ticket.getStatus() != TicketStatus.PENDING) {
+            throw new AppException(409, "INVALID_ASSIGNMENT", "Can only assign admin to PENDING tickets");
+        }
+
+        UUID targetAdminId = (request.getAdminId() != null)
+                ? request.getAdminId()
+                : SecurityUtils.getCurrentUserId();
+
+        Profile admin = profileRepository.findById(targetAdminId)
+                .orElseThrow(() -> new AppException(404, "ADMIN_NOT_FOUND", "Admin not found"));
+
+        if (!"ADMIN".equals(admin.getRole())) {
+            throw new AppException(400, "INVALID_ADMIN", "Target user is not an admin");
+        }
+
+        ticket.setAssignedAdminId(targetAdminId);
+        Ticket saved = ticketRepository.save(ticket);
+
+        notificationService.createNotification(
+                targetAdminId,
+                saved.getId(),
+                "You have been assigned ticket #" + saved.getTicketNumber()
+        );
+
+        return toDetailedResponse(saved);
     }
 
     public TicketResponse updateStatus(Long id, UpdateStatusRequest request) {
