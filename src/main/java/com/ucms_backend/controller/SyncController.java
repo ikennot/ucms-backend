@@ -43,7 +43,7 @@ public class SyncController {
     }
 
     @GetMapping("/notifications")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasAnyRole('STUDENT','ADMIN')")
     public ResponseEntity<ApiResponse<SyncResponse<List<NotificationResponse>>>> syncNotifications(
             @RequestParam(required = false) Instant since
     ) {
