@@ -51,19 +51,28 @@ public class AttachmentService {
         byte[] content = validateAndReadFile(file);
         String detectedMimeType = new Tika().detect(content);
         UUID userId = SecurityUtils.getCurrentUserId();
+        String role = SecurityUtils.getCurrentRole();
 
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new AppException(404, "TICKET_NOT_FOUND", "Ticket not found"));
 
-        if (!ticket.getUserId().equals(userId)) {
+        boolean isAdmin = "ADMIN".equals(role);
+        boolean isStudent = "STUDENT".equals(role);
+        if (!isAdmin && !isStudent) {
             throw new AppException(403, "FORBIDDEN", "Access denied");
         }
 
-        Profile profile = profileRepository.findById(userId)
-                .orElseThrow(() -> new AppException(404, "PROFILE_NOT_FOUND", "Profile not found"));
+        if (isStudent) {
+            if (ticket.getUserId() == null || !ticket.getUserId().equals(userId)) {
+                throw new AppException(403, "FORBIDDEN", "Access denied");
+            }
 
-        if (!profile.isEmailVerified()) {
-            throw new AppException(403, "ACCOUNT_LIMITED", "Verified email required to upload attachments");
+            Profile profile = profileRepository.findById(userId)
+                    .orElseThrow(() -> new AppException(404, "PROFILE_NOT_FOUND", "Profile not found"));
+
+            if (!profile.isEmailVerified()) {
+                throw new AppException(403, "ACCOUNT_LIMITED", "Verified email required to upload attachments");
+            }
         }
 
         if (ticket.getStatus() == TicketStatus.CLOSED || ticket.getStatus() == TicketStatus.RESOLVED) {
@@ -86,15 +95,17 @@ public class AttachmentService {
         TicketAttachment saved = ticketAttachmentRepository.save(attachment);
         String signedUrl = supabaseStorageService.generateSignedUrl(storagePath);
 
-        List<Profile> admins = profileRepository.findByRole("ADMIN");
-        String filename = saved.getOriginalFilename() != null ? saved.getOriginalFilename() : "file";
-        for (Profile admin : admins) {
-            if (admin != null && admin.getAuthUserId() != null) {
-                notificationService.createNotification(
-                        admin.getAuthUserId(),
-                        ticket.getId(),
-                        "Student uploaded attachment on ticket #" + ticket.getTicketNumber() + ": " + filename
-                );
+        if (isStudent) {
+            List<Profile> admins = profileRepository.findByRole("ADMIN");
+            String filename = saved.getOriginalFilename() != null ? saved.getOriginalFilename() : "file";
+            for (Profile admin : admins) {
+                if (admin != null && admin.getAuthUserId() != null) {
+                    notificationService.createNotification(
+                            admin.getAuthUserId(),
+                            ticket.getId(),
+                            "Student uploaded attachment on ticket #" + ticket.getTicketNumber() + ": " + filename
+                    );
+                }
             }
         }
 

@@ -26,7 +26,7 @@ public class AttachmentController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasAnyRole('STUDENT', 'ADMIN')")
     public ResponseEntity<ApiResponse<AttachmentResponse>> uploadAttachment(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file

@@ -53,7 +53,7 @@ Notes:
 
 | Method | Endpoint | Role | Description |
 |--------|----------|------|-------------|
-| POST | `/api/tickets/{id}/attachments` | Student | Upload photo/file → Supabase Storage; saves `storage_path` in DB |
+| POST | `/api/tickets/{id}/attachments` | Student / Admin | Upload photo/file → Supabase Storage; saves `storage_path` in DB |
 | GET | `/api/tickets/{id}/attachments` | Student / Admin | List attachments for a ticket (includes signed URLs) |
 
 Notes:
