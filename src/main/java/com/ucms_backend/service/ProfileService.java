@@ -7,9 +7,11 @@ import com.ucms_backend.dto.UpdateProfileRequest;
 import com.ucms_backend.exception.AppException;
 import com.ucms_backend.model.entity.Profile;
 import com.ucms_backend.repository.ProfileRepository;
+import java.util.List;
 import java.util.UUID;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -27,6 +29,12 @@ public class ProfileService {
         this.profileRepository = profileRepository;
         this.supabaseAuthService = supabaseAuthService;
         this.realtimeSseService = realtimeSseService;
+    }
+
+    public List<ProfileResponse> getAllAdmins() {
+        return profileRepository.findByRole("ADMIN").stream()
+                .map(ProfileResponse::from)
+                .collect(Collectors.toList());
     }
 
     public ProfileResponse getMyProfile(UUID authUserId) {
