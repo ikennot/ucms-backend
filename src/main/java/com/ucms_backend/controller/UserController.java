@@ -8,6 +8,7 @@ import com.ucms_backend.dto.UpdateProfileRequest;
 import com.ucms_backend.service.AuthService;
 import com.ucms_backend.service.ProfileService;
 import jakarta.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,6 +30,12 @@ public class UserController {
     public UserController(ProfileService profileService, AuthService authService) {
         this.profileService = profileService;
         this.authService = authService;
+    }
+
+    @GetMapping("/admins")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<ProfileResponse>>> getAllAdmins() {
+        return ResponseEntity.ok(ApiResponse.ok("Admins retrieved", profileService.getAllAdmins()));
     }
 
     @GetMapping("/me")
