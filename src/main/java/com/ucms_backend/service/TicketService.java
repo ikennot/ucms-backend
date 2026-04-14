@@ -399,15 +399,9 @@ public class TicketService {
             throw new AppException(409, "INVALID_STATUS_TRANSITION", "Invalid status transition");
         }
 
-        if (current == TicketStatus.RESOLVED
-                && next == TicketStatus.CLOSED
-                && !ticket.isConfirmedResolved()) {
-            throw new AppException(409, "CONFIRMATION_REQUIRED",
-                    "Student must confirm resolution before the ticket can be closed");
-        }
-
         ticket.setStatus(next);
         if (next == TicketStatus.CLOSED) {
+            ticket.setConfirmedResolved(true);
             ticket.setArchived(true);
         }
         applyUrgency(ticket);
