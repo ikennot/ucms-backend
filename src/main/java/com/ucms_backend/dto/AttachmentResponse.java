@@ -19,6 +19,7 @@ public class AttachmentResponse {
     private long sizeBytes;
     private String signedUrl;
     private LocalDateTime uploadedAt;
+    private String uploaderRole;
 
     public static AttachmentResponse from(TicketAttachment attachment, String signedUrl) {
         return AttachmentResponse.builder()
@@ -28,6 +29,7 @@ public class AttachmentResponse {
                 .sizeBytes(attachment.getSizeBytes())
                 .signedUrl(signedUrl)
                 .uploadedAt(attachment.getUploadedAt())
+                .uploaderRole(attachment.getUploaderRole())
                 .build();
     }
 }

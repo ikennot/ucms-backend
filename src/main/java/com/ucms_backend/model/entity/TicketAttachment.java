@@ -44,6 +44,9 @@ public class TicketAttachment {
     @Column(name = "uploaded_at", nullable = false)
     private LocalDateTime uploadedAt;
 
+    @Column(name = "uploader_role", length = 20)
+    private String uploaderRole;
+
     @PrePersist
     void onPrePersist() {
         if (uploadedAt == null) {

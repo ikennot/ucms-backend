@@ -90,6 +90,7 @@ public class AttachmentService {
                 .originalFilename(originalFilename)
                 .mimeType(detectedMimeType)
                 .sizeBytes(file.getSize())
+                .uploaderRole(role)
                 .build();
 
         TicketAttachment saved = ticketAttachmentRepository.save(attachment);
