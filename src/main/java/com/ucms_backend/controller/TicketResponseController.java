@@ -27,7 +27,7 @@ public class TicketResponseController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
     public ResponseEntity<ApiResponse<TicketResponseDto>> addResponse(
             @PathVariable Long id,
             @Valid @RequestBody CreateResponseRequest request

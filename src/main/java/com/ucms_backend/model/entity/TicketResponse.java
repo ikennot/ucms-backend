@@ -30,8 +30,14 @@ public class TicketResponse {
     @Column(name = "ticket_id", nullable = false)
     private Long ticketId;
 
-    @Column(name = "admin_id", nullable = false)
+    @Column(name = "admin_id")
     private UUID adminId;
+
+    @Column(name = "student_id")
+    private UUID studentId;
+
+    @Column(name = "responder_role", nullable = false)
+    private String responderRole;
 
     @Column(nullable = false)
     private String message;
