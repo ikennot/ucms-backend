@@ -20,6 +20,8 @@ import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+//test
+
 /**
  * Authenticates Supabase bearer tokens, looks up role from the profile table,
  * and sets the security context.
